@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consulta MySQL</title>
+  </head>
+  <body>
+    <h1>Consulta MySQL</h1>
+    <form id="queryForm">
+      <label for="sqlQuery">Consulta SQL:</label><br />
+      <textarea id="sqlQuery" name="sqlQuery" rows="4" cols="50"></textarea
+      ><br /><br />
+      <button type="submit">Ejecutar</button>
+    </form>
+
+    <h2>Resultados:</h2>
+    <pre id="results"></pre>
+
+    <script>
+      document
+        .getElementById("queryForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const query = document.getElementById("sqlQuery").value;
+
+          try {
+            const response = await fetch(
+              `http://localhost:3000/query?q=${encodeURIComponent(query)}`
+            );
+            const data = await response.json();
+            document.getElementById("results").textContent = JSON.stringify(
+              data,
+              null,
+              2
+            );
+          } catch (error) {
+            console.error("Error:", error);
+          }
+        });
+    </script>
+  </body>
+</html>
