@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
         Swal.fire({
           icon: "success",
           title: "Registro exitoso",
-          text: "✅ Usuario registrado correctamente",
+          text: "✅ Usuario registrado correctamente. Por favor, verifica tu correo electrónico.",
           confirmButtonText: "Ir al Login",
         }).then(() => {
           window.location.href = "login.html"; // Redirige después de aceptar

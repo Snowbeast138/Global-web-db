@@ -1,6 +1,8 @@
 const http = require("http");
 const mysql = require("mysql");
 const url = require("url");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 // Configuración de conexión a MySQL
 const connection = mysql.createConnection({
@@ -17,6 +19,15 @@ connection.connect((err) => {
     return;
   }
   console.log("✅ Conectado a la base de datos MySQL");
+});
+
+// Configuración de Nodemailer
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Puedes usar otro servicio como 'yahoo', 'outlook', etc.
+  auth: {
+    user: "snowbeast138@gmail.com", // Tu correo electrónico
+    pass: "tlmk pvpv mjdr pqot", // Tu contraseña o una contraseña de aplicación si usas Gmail
+  },
 });
 
 // Crear servidor
@@ -36,24 +47,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Ruta para ejecutar consultas SQL (usada solo con precaución)
-  if (path === "/query" && req.method === "GET") {
-    const query = parsedUrl.query.q;
-
-    connection.query(query, (err, results) => {
-      if (err) {
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Error en la consulta SQL" }));
-        return;
-      }
-
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(results));
-    });
-
-    return;
-  }
-
+  // Ruta para registro de usuarios
   if (path === "/signup" && req.method === "POST") {
     let body = "";
     req.on("data", (chunk) => {
@@ -85,14 +79,18 @@ const server = http.createServer((req, res) => {
             return;
           }
 
-          // Si el correo no existe, proceder a insertar el nuevo usuario
-          const insertQuery = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'CLIENT')`;
+          // Generar un token de verificación
+          const verificationToken = crypto.randomBytes(20).toString("hex");
+
+          // Insertar el nuevo usuario con el token de verificación
+          const insertQuery = `INSERT INTO users (name, email, password, role, verification_token, is_verified) VALUES (?, ?, ?, 'CLIENT', ?, false)`;
 
           connection.query(
             insertQuery,
-            [name, email, password],
+            [name, email, password, verificationToken],
             (err, results) => {
               if (err) {
+                console.error("Error inserting user:", err);
                 res.writeHead(500, { "Content-Type": "application/json" });
                 res.end(
                   JSON.stringify({ error: "Error al registrar el usuario" })
@@ -100,10 +98,34 @@ const server = http.createServer((req, res) => {
                 return;
               }
 
-              res.writeHead(200, { "Content-Type": "application/json" });
-              res.end(
-                JSON.stringify({ message: "Usuario creado exitosamente" })
-              );
+              // Enviar correo de verificación
+              const mailOptions = {
+                from: "snowbeast138.com",
+                to: email,
+                subject: "Verificación de correo electrónico",
+                text: `Por favor, verifica tu correo electrónico haciendo clic en el siguiente enlace: http://localhost:3000/verify?token=${verificationToken}`,
+              };
+
+              transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                  console.error("Error enviando el correo:", error);
+                  res.writeHead(500, { "Content-Type": "application/json" });
+                  res.end(
+                    JSON.stringify({
+                      error: "Error enviando el correo de verificación",
+                    })
+                  );
+                  return;
+                }
+                console.log("Email sent:", info.response);
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({
+                    message:
+                      "Usuario creado exitosamente. Por favor, verifica tu correo electrónico.",
+                  })
+                );
+              });
             }
           );
         });
@@ -116,34 +138,100 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Ruta para verificar el correo electrónico
+  if (path === "/verify" && req.method === "GET") {
+    const token = parsedUrl.query.token;
+
+    if (!token) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Token no proporcionado" }));
+      return;
+    }
+
+    // Buscar al usuario con el token de verificación
+    const verifyQuery = "SELECT * FROM users WHERE verification_token = ?";
+
+    connection.query(verifyQuery, [token], (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error en la verificación" }));
+        return;
+      }
+
+      if (results.length === 0) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({ error: "Token inválido o usuario no encontrado" })
+        );
+        return;
+      }
+
+      const user = results[0];
+
+      // Marcar al usuario como verificado
+      const updateQuery =
+        "UPDATE users SET is_verified = true, verification_token = NULL WHERE id = ?";
+
+      console.log("User ID:", user.id); // Depuración adicional
+
+      connection.query(updateQuery, [user.id], (err, results) => {
+        if (err) {
+          console.error("Error updating user verification status:", err);
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Error al verificar el usuario" }));
+          return;
+        }
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            message: "Correo electrónico verificado exitosamente",
+          })
+        );
+      });
+    });
+
+    return;
+  }
+
+  // Ruta para iniciar sesión
   if (path === "/login" && req.method === "POST") {
     let body = "";
     req.on("data", (chunk) => {
-      body += chunk.toString(); // Recibe los datos del frontend
+      body += chunk.toString();
     });
 
     req.on("end", () => {
       try {
         const { email, password } = JSON.parse(body);
 
-        // Consulta la base de datos para verificar las credenciales
-        const query = `SELECT * FROM users WHERE email = ? AND password = ?`;
-        connection.query(query, [email, password], (err, results) => {
+        // Buscar al usuario por correo y contraseña
+        const loginQuery =
+          "SELECT * FROM users WHERE email = ? AND password = ?";
+
+        connection.query(loginQuery, [email, password], (err, results) => {
           if (err) {
             res.writeHead(500, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: "Error en la consulta de login" }));
+            res.end(JSON.stringify({ error: "Error al iniciar sesión" }));
             return;
           }
 
-          if (results.length > 0) {
-            // Credenciales válidas
-            res.writeHead(200, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "Login exitoso" }));
-          } else {
-            // Credenciales inválidas
+          if (results.length === 0) {
             res.writeHead(401, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ error: "Credenciales incorrectas" }));
+            return;
           }
+
+          const user = results[0];
+
+          if (!user.is_verified) {
+            res.writeHead(403, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "Correo no verificado" }));
+            return;
+          }
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ message: "Inicio de sesión exitoso" }));
         });
       } catch (error) {
         res.writeHead(400, { "Content-Type": "application/json" });

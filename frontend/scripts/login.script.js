@@ -30,6 +30,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         title: "Error",
         text: "❌ Credenciales incorrectas. Inténtalo de nuevo.",
       });
+    } else if (response.status === 403) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "❌ Correo no verificado. Por favor, verifica tu correo electrónico.",
+      });
     } else {
       Swal.fire({
         icon: "error",
