@@ -55,7 +55,6 @@ const server = http.createServer((req, res) => {
   }
 
   if (path === "/signup" && req.method === "POST") {
-    // Corrige "singup" a "signup"
     let body = "";
     req.on("data", (chunk) => {
       body += chunk.toString();
@@ -65,18 +64,48 @@ const server = http.createServer((req, res) => {
       try {
         const { name, email, password } = JSON.parse(body);
 
-        // Consulta para insertar usuario con role 'CLIENT'
-        const query = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'CLIENT')`;
+        // Verificar si el correo ya está registrado
+        const checkEmailQuery = "SELECT * FROM users WHERE email = ?";
 
-        connection.query(query, [name, email, password], (err, results) => {
+        connection.query(checkEmailQuery, [email], (err, results) => {
           if (err) {
             res.writeHead(500, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: "Error al registrar el usuario" }));
+            res.end(JSON.stringify({ error: "Error al verificar el correo" }));
             return;
           }
 
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ message: "Usuario creado exitosamente" }));
+          if (results.length > 0) {
+            // Si el correo ya existe
+            res.writeHead(409, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({
+                error: "Este correo electrónico ya está registrado",
+              })
+            );
+            return;
+          }
+
+          // Si el correo no existe, proceder a insertar el nuevo usuario
+          const insertQuery = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'CLIENT')`;
+
+          connection.query(
+            insertQuery,
+            [name, email, password],
+            (err, results) => {
+              if (err) {
+                res.writeHead(500, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({ error: "Error al registrar el usuario" })
+                );
+                return;
+              }
+
+              res.writeHead(200, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({ message: "Usuario creado exitosamente" })
+              );
+            }
+          );
         });
       } catch (error) {
         res.writeHead(400, { "Content-Type": "application/json" });

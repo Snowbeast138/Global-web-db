@@ -10,7 +10,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const confirmPassword = document.getElementById("confirm-password").value;
 
     if (password !== confirmPassword) {
-      alert("❌ Las contraseñas no coinciden.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "❌ Las contraseñas no coinciden.",
+      });
       return;
     }
 
@@ -28,13 +32,34 @@ document.addEventListener("DOMContentLoaded", function () {
       const result = await response.json();
 
       if (response.ok) {
-        alert("✅ Registro exitoso");
-        window.location.href = "login.html"; // Redirige al login
+        Swal.fire({
+          icon: "success",
+          title: "Registro exitoso",
+          text: "✅ Usuario registrado correctamente",
+          confirmButtonText: "Ir al Login",
+        }).then(() => {
+          window.location.href = "login.html"; // Redirige después de aceptar
+        });
+      } else if (response.status === 409) {
+        // Si el correo ya existe
+        Swal.fire({
+          icon: "error",
+          title: "Correo duplicado",
+          text: "❌ Este correo electrónico ya está registrado.",
+        });
       } else {
-        alert("❌ Error: " + result.error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "❌ " + result.error,
+        });
       }
     } catch (error) {
-      alert("❌ Error de conexión con el servidor.");
+      Swal.fire({
+        icon: "error",
+        title: "Error de conexión",
+        text: "❌ No se pudo conectar con el servidor.",
+      });
     }
   });
 });

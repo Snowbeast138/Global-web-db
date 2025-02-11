@@ -14,11 +14,28 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     });
 
     if (response.status === 200) {
-      window.location.href = "index.html";
+      Swal.fire({
+        icon: "success",
+        title: "Login exitoso",
+        text: "✅ Bienvenido",
+        confirmButtonText: "Continuar",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = "index.html";
+        }
+      });
     } else if (response.status === 401) {
-      alert("Usuario o contraseña incorrectos");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "❌ Credenciales incorrectas. Inténtalo de nuevo.",
+      });
     } else {
-      alert("Error desconocido. Inténtalo de nuevo.");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "❌ Ocurrió un error inesperado. Inténtalo de nuevo.",
+      });
     }
   } catch (error) {
     console.error("❌ Error en la conexión:", error.message);
