@@ -1,16 +1,35 @@
+<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Carrusel de Imágenes</title>
-    <link rel="stylesheet" href="index.style.css" />
+    <title>Home Page</title>
+    <link rel="stylesheet" href="styles/index.style.css" />
   </head>
   <body>
+    <nav class="navbar">
+      <div class="logo">
+        <a href="index.html">
+          <img src="assets/logo.png" alt="Logo" />
+        </a>
+      </div>
+      <button class="menu-toggle" onclick="toggleMenu()">&#9776;</button>
+      <ul class="nav-links">
+        <li><a href="#productos">Productos</a></li>
+        <li><a href="#pedidos">Pedidos</a></li>
+        <li><a href="#acerca">Acerca de Nosotros</a></li>
+        <li><a href="#logout">Cerrar Sesión</a></li>
+      </ul>
+    </nav>
     <div class="carousel-container">
       <div class="carousel">
         <img src="assets/home_page_carrusel_1.jpg" alt="Imagen 1" />
         <img src="assets/home_page_carrusel_2.jpg" alt="Imagen 2" />
         <img src="assets/home_page_carrusel_3.jpg" alt="Imagen 3" />
+        <img src="assets/home_page_carrusel_4.jpg" alt="Imagen 4" />
+        <img src="assets/home_page_carrusel_5.jpg" alt="Imagen 5" />
+        <img src="assets/home_page_carrusel_6.jpg" alt="Imagen 6" />
+        <img src="assets/home_page_carrusel_7.png" alt="Imagen 7" />
       </div>
       <button class="prev" onclick="moverCarrusel(-1)">&#10094;</button>
       <button class="next" onclick="moverCarrusel(1)">&#10095;</button>
