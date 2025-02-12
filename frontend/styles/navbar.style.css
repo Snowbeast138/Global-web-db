@@ -1,0 +1,106 @@
+/* Navbar */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background-color: #db3725;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 9999;  /* Aseguramos que el navbar esté encima de las imágenes */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Lista de navegación */
+  .nav-links {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 0;
+    padding: 0;
+    flex-grow: 1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    z-index: 9999;  /* Asegura que el menú esté encima de las imágenes */
+  }
+  
+  /* Logo */
+  .logo-item {
+    margin-right: 20px;
+  }
+  
+  .logo {
+    height: 40px;
+    display: block;
+  }
+  
+  /* Elementos de la navbar */
+  .nav-links li {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-links a {
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+    gap: 5px;
+    padding: 5px 10px;
+  }
+  
+  .nav-links a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Botón de menú móvil */
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .menu-toggle {
+      display: block;
+    }
+  
+    .nav-links {
+      display: none; /* Se oculta el menú inicialmente */
+      flex-direction: column;
+      position: absolute;
+      top: 60px;
+      right: 0;
+      background-color: #db3725;
+      width: 100%;
+      text-align: center;
+      padding: 15px 0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 10000;  /* Aseguramos que el menú esté por encima de las imágenes */
+    }
+  
+    .nav-links.active {
+      display: flex; /* Se muestra el menú cuando tiene la clase "active" */
+    }
+  
+    .nav-links li {
+      margin: 8px 0;
+    }
+  
+    .nav-links a {
+      font-size: 16px;
+      padding: 8px 0;
+      display: block;
+    }
+  }
+  

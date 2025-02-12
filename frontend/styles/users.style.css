@@ -1,0 +1,91 @@
+/* Estilos generales */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
+  margin-top: 60px; /* Ajustar para el navbar fijo */
+}
+
+/* Tabla de Usuarios */
+#userTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  overflow-x: auto;
+  display: block;
+}
+
+#userTable th, #userTable td {
+  padding: 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+#userTable th {
+  background-color: #f4f4f4;
+}
+
+/* Buscar */
+.search-container {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center; /* Centrar la barra de búsqueda */
+  width: 100%;
+}
+
+#searchInput {
+  padding: 10px;
+  width: 80%; /* Ocupa el 80% del ancho de la pantalla */
+  max-width: 600px; /* Limitar el tamaño máximo */
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
+}
+
+.actions {
+  margin: 20px 0;
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+/* Estilos para los botones */
+.p-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.p-button-success {
+  background-color: #4CAF50;
+}
+
+.p-button-danger {
+  background-color: #f44336;
+}
+
+.p-button-warning {
+  background-color: #FF9800;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  #userTable th, #userTable td {
+    font-size: 12px; /* Reducir tamaño de fuente */
+  }
+
+  /* Ajustar la tabla para que se desplace horizontalmente */
+  #userTable {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

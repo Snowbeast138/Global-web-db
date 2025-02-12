@@ -3,14 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Home Page</title>
+    <title>Usuarios - Prietos y Asociados</title>
     <link rel="stylesheet" href="styles/index.style.css" />
+    <link rel="stylesheet" href="styles/users.style.css" />
     <link rel="stylesheet" href="https://unpkg.com/primeicons/primeicons.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/primefaces/10.0.0/themes/saga-blue/theme.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/primefaces/10.0.0/primefaces.min.css"
+    />
   </head>
   <body>
-    <!-- Navbar -->
     <nav class="navbar">
       <ul class="nav-links">
+        <!-- Enlaces del Navbar -->
         <li class="logo-item">
           <a href="index.html">
             <img src="assets/logo.png" alt="Logo" class="logo" />
@@ -47,42 +56,43 @@
       </button>
     </nav>
 
-    <div class="image-slider">
-      <img
-        src="assets/home_page_carrusel_1.jpg"
-        alt="Imagen 1"
-        class="slider-image active"
-      />
-      <img
-        src="assets/home_page_carrusel_2.jpg"
-        alt="Imagen 2"
-        class="slider-image"
-      />
-      <img
-        src="assets/home_page_carrusel_3.jpg"
-        alt="Imagen 3"
-        class="slider-image"
-      />
-      <img
-        src="assets/home_page_carrusel_4.jpg"
-        alt="Imagen 3"
-        class="slider-image"
-      /><img
-        src="assets/home_page_carrusel_5.jpg"
-        alt="Imagen 3"
-        class="slider-image"
-      /><img
-        src="assets/home_page_carrusel_6.jpg"
-        alt="Imagen 3"
-        class="slider-image"
-      /><img
-        src="assets/home_page_carrusel_7.png"
-        alt="Imagen 3"
-        class="slider-image"
-      />
-    </div>
+    <main>
+      <h1>Lista de Usuarios</h1>
+      <div class="search-container">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Buscar usuarios..."
+          oninput="filterUsers()"
+        />
+      </div>
 
-    <!-- Footer -->
+      <div class="actions">
+        <button class="p-button p-button-success" id="addButton">
+          <i class="pi pi-plus"></i> Agregar
+        </button>
+        <button class="p-button p-button-danger" id="deleteButton">
+          <i class="pi pi-trash"></i> Eliminar
+        </button>
+        <button class="p-button p-button-warning" id="editButton">
+          <i class="pi pi-pencil"></i> Modificar
+        </button>
+      </div>
+
+      <table id="userTable" class="p-datatable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Verificado</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </main>
+
     <footer>
       <p>Desarrollado por: Guillermo Isaac Vallin Cueva &bull; Año 2025</p>
       <div class="social-icons">
@@ -114,5 +124,6 @@
     </footer>
 
     <script src="scripts/index.script.js"></script>
+    <script src="scripts/users.script.js"></script>
   </body>
 </html>

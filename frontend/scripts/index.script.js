@@ -68,3 +68,23 @@ document.querySelectorAll(".nav-links a").forEach((link) => {
 
 // Añadir el evento al botón de menú
 document.querySelector(".menu-toggle").addEventListener("click", toggleMenu);
+
+// Función para cargar el Navbar y el Footer de manera asincrónica
+async function loadNavbarAndFooter() {
+  try {
+    // Esperar la carga del navbar
+    const navbarResponse = await fetch("navbar.html");
+    const navbarHtml = await navbarResponse.text();
+    document.getElementById("navbar-placeholder").innerHTML = navbarHtml;
+
+    // Esperar la carga del footer
+    const footerResponse = await fetch("footer.html");
+    const footerHtml = await footerResponse.text();
+    document.getElementById("footer-placeholder").innerHTML = footerHtml;
+  } catch (error) {
+    console.error("Error al cargar los archivos del navbar o footer:", error);
+  }
+}
+
+// Llamar a la función para cargar el Navbar y Footer
+loadNavbarAndFooter();

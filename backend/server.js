@@ -30,48 +30,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Almacenamiento de sesiones en memoria
-const sessions = {};
-
-// Función para generar un ID de sesión único
-function generateSessionId() {
-  return crypto.randomBytes(16).toString("hex");
-}
-
-// Función para verificar si una sesión ha expirado
-function isSessionExpired(session) {
-  const now = Date.now();
-  const lastActivity = session.lastActivity || 0;
-  const sessionDuration = 10 * 60 * 1000; // 10 minutos en milisegundos
-  return now - lastActivity > sessionDuration;
-}
-
-// Función para eliminar sesiones expiradas
-function cleanupExpiredSessions() {
-  const now = Date.now();
-  for (const sessionId in sessions) {
-    if (isSessionExpired(sessions[sessionId])) {
-      delete sessions[sessionId];
-      console.log(`Sesión ${sessionId} eliminada por expiración.`);
-    }
-  }
-}
-
-// Ejecutar la limpieza de sesiones expiradas cada minuto
-setInterval(cleanupExpiredSessions, 60 * 1000); // 60 segundos
-
-// Función para parsear cookies
-function parseCookies(cookieHeader) {
-  const cookies = {};
-  if (cookieHeader) {
-    cookieHeader.split(";").forEach((cookie) => {
-      const parts = cookie.split("=");
-      cookies[parts[0].trim()] = (parts[1] || "").trim();
-    });
-  }
-  return cookies;
-}
-
 // Crear servidor
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -88,13 +46,6 @@ const server = http.createServer((req, res) => {
     res.end();
     return;
   }
-
-  // Parsear cookies de la solicitud
-  const cookies = parseCookies(req.headers.cookie);
-
-  // Verificar si hay una sesión activa
-  const sessionId = cookies.sessionId;
-  const session = sessions[sessionId];
 
   // Ruta para registro de usuarios
   if (path === "/signup" && req.method === "POST") {
@@ -221,8 +172,6 @@ const server = http.createServer((req, res) => {
       const updateQuery =
         "UPDATE users SET is_verified = true, verification_token = NULL WHERE id = ?";
 
-      console.log("User ID:", user.id); // Depuración adicional
-
       connection.query(updateQuery, [user.id], (err, results) => {
         if (err) {
           console.error("Error updating user verification status:", err);
@@ -279,20 +228,6 @@ const server = http.createServer((req, res) => {
             return;
           }
 
-          // Crear una nueva sesión
-          const sessionId = generateSessionId();
-          sessions[sessionId] = {
-            userId: user.id,
-            email: user.email,
-            lastActivity: Date.now(), // Guardar la hora de la última actividad
-          };
-
-          // Enviar la cookie de sesión al cliente
-          res.setHeader(
-            "Set-Cookie",
-            `sessionId=${sessionId}; HttpOnly; Max-Age=${10 * 60}` // Cookie válida por 10 minutos
-          );
-
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ message: "Inicio de sesión exitoso" }));
         });
@@ -300,6 +235,26 @@ const server = http.createServer((req, res) => {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Formato JSON inválido" }));
       }
+    });
+
+    return;
+  }
+
+  // Ruta para obtener usuarios
+  if (path === "/getUsers" && req.method === "GET") {
+    // Consulta para obtener todos los usuarios
+    const getUsersQuery =
+      "SELECT id, name, email, role, is_verified FROM users";
+
+    connection.query(getUsersQuery, (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener los usuarios" }));
+        return;
+      }
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(results));
     });
 
     return;
