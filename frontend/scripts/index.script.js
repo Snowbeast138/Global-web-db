@@ -1,16 +1,22 @@
-let indice = 0;
-const carrusel = document.querySelector(".carousel");
-const total = document.querySelectorAll(".carousel img").length;
+let currentIndex = 0;
+const images = document.querySelectorAll(".slider-image");
+const total = images.length;
 
-// Función para mover el carrusel manualmente
+// Función para mover el carrusel (manual o automático)
 function moverCarrusel(direccion) {
-  indice = (indice + direccion + total) % total;
-  carrusel.style.transform = `translateX(${-indice * 100}vw)`;
+  // Eliminar la clase "active" de la imagen actual
+  images[currentIndex].classList.remove("active");
+
+  // Calcular el siguiente índice y asegurarse de que no salga del rango
+  currentIndex = (currentIndex + direccion + total) % total;
+
+  // Agregar la clase "active" a la nueva imagen
+  images[currentIndex].classList.add("active");
 }
 
 // Función para mover el carrusel automáticamente cada 3 segundos
 function moverCarruselAutomatico() {
-  moverCarrusel(1);
+  moverCarrusel(1); // Mover a la siguiente imagen
 }
 
 // Iniciar el carrusel automático
@@ -18,10 +24,11 @@ let intervalo = setInterval(moverCarruselAutomatico, 3000);
 
 // Reiniciar el carrusel automático al presionar un botón
 function reiniciarCarrusel() {
-  clearInterval(intervalo);
-  intervalo = setInterval(moverCarruselAutomatico, 3000);
+  clearInterval(intervalo); // Detener el intervalo actual
+  intervalo = setInterval(moverCarruselAutomatico, 3000); // Iniciar uno nuevo
 }
 
+// Manejar los botones de anterior y siguiente
 document.querySelector(".prev").addEventListener("click", () => {
   moverCarrusel(-1);
   reiniciarCarrusel();
@@ -35,7 +42,16 @@ document.querySelector(".next").addEventListener("click", () => {
 // Función para mostrar/ocultar el menú en móviles
 function toggleMenu() {
   const navLinks = document.querySelector(".nav-links");
+  const menuIcon = document.querySelector(".menu-toggle i");
+
   navLinks.classList.toggle("active");
+
+  // Cambiar ícono de hamburguesa a "X" y viceversa
+  if (navLinks.classList.contains("active")) {
+    menuIcon.classList.replace("pi-bars", "pi-times");
+  } else {
+    menuIcon.classList.replace("pi-times", "pi-bars");
+  }
 }
 
 // Cerrar el menú al hacer clic en un enlace
@@ -43,8 +59,12 @@ document.querySelectorAll(".nav-links a").forEach((link) => {
   link.addEventListener("click", () => {
     const navLinks = document.querySelector(".nav-links");
     navLinks.classList.remove("active");
+
+    // Restaurar ícono de hamburguesa
+    const menuIcon = document.querySelector(".menu-toggle i");
+    menuIcon.classList.replace("pi-times", "pi-bars");
   });
 });
 
-// Añade el evento al botón de menú
+// Añadir el evento al botón de menú
 document.querySelector(".menu-toggle").addEventListener("click", toggleMenu);

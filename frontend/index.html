@@ -5,35 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Home Page</title>
     <link rel="stylesheet" href="styles/index.style.css" />
+    <link rel="stylesheet" href="https://unpkg.com/primeicons/primeicons.css" />
   </head>
   <body>
+    <!-- Navbar -->
     <nav class="navbar">
-      <div class="logo">
-        <a href="index.html">
-          <img src="assets/logo.png" alt="Logo" />
+      <ul class="nav-links">
+        <li class="logo-item">
+          <a href="index.html">
+            <img src="assets/logo.png" alt="Logo" class="logo" />
+          </a>
+        </li>
+        <li>
+          <a href="#usuarios"><i class="pi pi-users"></i> Usuarios</a>
+        </li>
+        <li>
+          <a href="#productos"><i class="pi pi-shopping-bag"></i> Productos</a>
+        </li>
+        <li>
+          <a href="#pedidos"><i class="pi pi-book"></i> Pedidos</a>
+        </li>
+        <li>
+          <a href="#acerca"
+            ><i class="pi pi-info-circle"></i> Acerca de Nosotros</a
+          >
+        </li>
+        <li>
+          <a href="#carrito"><i class="pi pi-shopping-cart"></i> Carrito</a>
+        </li>
+        <li>
+          <a href="#historial"><i class="pi pi-history"></i> Bitácora</a>
+        </li>
+        <li>
+          <a href="#logout"><i class="pi pi-sign-out"></i> Cerrar Sesión</a>
+        </li>
+      </ul>
+      <button class="menu-toggle" onclick="toggleMenu()">
+        <i class="pi pi-bars"></i>
+      </button>
+    </nav>
+
+    <div class="image-slider">
+      <img
+        src="assets/home_page_carrusel_1.jpg"
+        alt="Imagen 1"
+        class="slider-image active"
+      />
+      <img
+        src="assets/home_page_carrusel_2.jpg"
+        alt="Imagen 2"
+        class="slider-image"
+      />
+      <img
+        src="assets/home_page_carrusel_3.jpg"
+        alt="Imagen 3"
+        class="slider-image"
+      />
+      <img
+        src="assets/home_page_carrusel_4.jpg"
+        alt="Imagen 3"
+        class="slider-image"
+      /><img
+        src="assets/home_page_carrusel_5.jpg"
+        alt="Imagen 3"
+        class="slider-image"
+      /><img
+        src="assets/home_page_carrusel_6.jpg"
+        alt="Imagen 3"
+        class="slider-image"
+      /><img
+        src="assets/home_page_carrusel_7.png"
+        alt="Imagen 3"
+        class="slider-image"
+      />
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>Desarrollado por: Guillermo Isaac Vallin Cueva &bull; Año 2025</p>
+      <div class="social-icons">
+        <a
+          href="https://www.linkedin.com/in/snowbeast138/"
+          target="_blank"
+          class="social-link"
+        >
+          <i class="pi pi-linkedin"></i> LinkedIn
+        </a>
+        <a
+          href="https://x.com/snowbeast138"
+          target="_blank"
+          class="social-link"
+        >
+          <i class="pi pi-twitter"></i> Twitter
+        </a>
+        <a href="tel:+1234567890" class="social-link">
+          <i class="pi pi-phone"></i> +1 234 567 890
+        </a>
+        <a
+          href="https://github.com/snowbeast138"
+          target="_blank"
+          class="social-link"
+        >
+          <i class="pi pi-github"></i> Snowbeast138
         </a>
       </div>
-      <button class="menu-toggle" onclick="toggleMenu()">&#9776;</button>
-      <ul class="nav-links">
-        <li><a href="#productos">Productos</a></li>
-        <li><a href="#pedidos">Pedidos</a></li>
-        <li><a href="#acerca">Acerca de Nosotros</a></li>
-        <li><a href="#logout">Cerrar Sesión</a></li>
-      </ul>
-    </nav>
-    <div class="carousel-container">
-      <div class="carousel">
-        <img src="assets/home_page_carrusel_1.jpg" alt="Imagen 1" />
-        <img src="assets/home_page_carrusel_2.jpg" alt="Imagen 2" />
-        <img src="assets/home_page_carrusel_3.jpg" alt="Imagen 3" />
-        <img src="assets/home_page_carrusel_4.jpg" alt="Imagen 4" />
-        <img src="assets/home_page_carrusel_5.jpg" alt="Imagen 5" />
-        <img src="assets/home_page_carrusel_6.jpg" alt="Imagen 6" />
-        <img src="assets/home_page_carrusel_7.png" alt="Imagen 7" />
-      </div>
-      <button class="prev" onclick="moverCarrusel(-1)">&#10094;</button>
-      <button class="next" onclick="moverCarrusel(1)">&#10095;</button>
-    </div>
+    </footer>
+
     <script src="scripts/index.script.js"></script>
   </body>
 </html>

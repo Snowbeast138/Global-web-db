@@ -1,151 +1,185 @@
+/* General */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  font-family: Arial, sans-serif;
 }
 
+/* Navbar */
 .navbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  justify-content: space-between;
+  padding: 10px 15px;
   background-color: #db3725;
   position: fixed;
   width: 100%;
   top: 0;
-  z-index: 1000;
+  z-index: 9999;  /* Aseguramos que el navbar esté encima de las imágenes */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.logo img {
-  height: 50px;
-}
-
+/* Lista de navegación */
 .nav-links {
   list-style: none;
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 15px;
   margin: 0;
   padding: 0;
+  flex-grow: 1;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  z-index: 9999;  /* Asegura que el menú esté encima de las imágenes */
 }
 
+/* Logo */
+.logo-item {
+  margin-right: 20px;
+}
+
+.logo {
+  height: 40px;
+  display: block;
+}
+
+/* Elementos de la navbar */
 .nav-links li {
-  display: inline;
+  display: flex;
+  align-items: center;
 }
 
 .nav-links a {
+  display: flex;
+  align-items: center;
   color: white;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
+  white-space: nowrap;
+  gap: 5px;
+  padding: 5px 10px;
 }
 
 .nav-links a:hover {
   text-decoration: underline;
 }
 
-.carousel-container {
+/* Botón de menú móvil */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+/* Carrusel de imágenes */
+.image-slider {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
-  margin-top: 60px;
+  margin-top: 60px; /* Espacio para el navbar */
+  z-index: 0; /* Aseguramos que el carrusel esté debajo del navbar */
 }
 
-.carousel {
-  display: flex;
-  width: 300%;
-  height: 100%;
-  transition: transform 0.5s ease-in-out;
-}
-
-.carousel img {
+.slider-image {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
 }
 
-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
+.slider-image.active {
+  opacity: 1;
+}
+
+/* Footer */
+footer {
+  background-color: #E9D99B; /* Color amarillo claro */
+  color: #5A3E1B; /* Marrón oscuro para contraste */
+  text-align: center;
+  padding: 15px 0;
+  font-size: 14px;
+  font-weight: bold;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Redes sociales en el footer */
+.social-icons {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.social-link {
+  color: #5A3E1B; /* Color oscuro para mejor visibilidad */
+  text-decoration: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.social-link i {
   font-size: 18px;
+  color: #5A3E1B; /* Mismo color para iconos */
 }
 
-.prev {
-  left: 10px;
+.social-link:hover {
+  text-decoration: underline;
+  color: #333; /* Un poco más oscuro al pasar el cursor */
 }
 
-.next {
-  right: 10px;
-}
-
-/* Estilos para móviles */
+/* Responsive */
 @media (max-width: 768px) {
   .menu-toggle {
     display: block;
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
   }
 
   .nav-links {
-    display: none;
+    display: none; /* Se oculta el menú inicialmente */
     flex-direction: column;
     position: absolute;
-    top: 60px; /* Ajusta según la altura del navbar */
+    top: 60px;
     right: 0;
     background-color: #db3725;
     width: 100%;
     text-align: center;
-    padding: 10px 0;
+    padding: 15px 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10000;  /* Aseguramos que el menú esté por encima de las imágenes */
   }
 
   .nav-links.active {
-    display: flex;
+    display: flex; /* Se muestra el menú cuando tiene la clase "active" */
   }
 
   .nav-links li {
-    margin: 10px 0;
+    margin: 8px 0;
   }
 
-  .carousel-container {
-    margin-top: 50px;
-    height: calc(100% - 50px);
-  }
-
-  .carousel {
-    height: 100%;
-  }
-
-  .carousel img {
-    height: 100%;
-  }
-
-  button {
-    padding: 8px;
+  .nav-links a {
     font-size: 16px;
-  }
-}
-
-/* Ocultar el botón de menú en pantallas grandes */
-@media (min-width: 769px) {
-  .menu-toggle {
-    display: none;
+    padding: 8px 0;
+    display: block;
   }
 
-  .nav-links {
-    display: flex;
-    position: static;
-    background-color: transparent;
-    width: auto;
+  /* Redes sociales en móvil */
+  .social-icons {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
   }
 }
