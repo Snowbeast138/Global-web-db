@@ -36,9 +36,13 @@ const server = http.createServer((req, res) => {
   const path = parsedUrl.pathname;
 
   // Configurar CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // Configuración de CORS
+  res.setHeader("Access-Control-Allow-Origin", "*"); // Permitir solicitudes desde cualquier origen
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  ); // Métodos permitidos
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Headers permitidos
 
   // Manejo de solicitud OPTIONS (CORS preflight)
   if (req.method === "OPTIONS") {
@@ -126,6 +130,220 @@ const server = http.createServer((req, res) => {
                   })
                 );
               });
+            }
+          );
+        });
+      } catch (error) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Formato JSON inválido" }));
+      }
+    });
+
+    return;
+  }
+
+  if (path === "/registUser" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+
+    req.on("end", () => {
+      try {
+        const { name, email, password, role } = JSON.parse(body);
+
+        // Verificar si el correo ya está registrado
+        const checkEmailQuery = "SELECT * FROM users WHERE email = ?";
+
+        connection.query(checkEmailQuery, [email], (err, results) => {
+          if (err) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "Error al verificar el correo" }));
+            return;
+          }
+
+          if (results.length > 0) {
+            // Si el correo ya existe
+            res.writeHead(409, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({
+                error: "Este correo electrónico ya está registrado",
+              })
+            );
+            return;
+          }
+
+          // Generar un token de verificación
+          const verificationToken = crypto.randomBytes(20).toString("hex");
+
+          // Insertar el nuevo usuario con el token de verificación
+          const insertQuery = `INSERT INTO users (name, email, password, role, verification_token, is_verified) VALUES (?, ?, ?, ?, ?, false)`;
+
+          connection.query(
+            insertQuery,
+            [name, email, password, role, verificationToken],
+            (err, results) => {
+              if (err) {
+                console.error("Error inserting user:", err);
+                res.writeHead(500, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({ error: "Error al registrar el usuario" })
+                );
+                return;
+              }
+
+              // Enviar correo de verificación
+              const mailOptions = {
+                from: "snowbeast138.com",
+                to: email,
+                subject: "Verificación de correo electrónico",
+                text: `Por favor, verifica tu correo electrónico haciendo clic en el siguiente enlace: http://localhost:3000/verify?token=${verificationToken}`,
+              };
+
+              transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                  console.error("Error enviando el correo:", error);
+                  res.writeHead(500, { "Content-Type": "application/json" });
+                  res.end(
+                    JSON.stringify({
+                      error: "Error enviando el correo de verificación",
+                    })
+                  );
+                  return;
+                }
+                console.log("Email sent:", info.response);
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({
+                    message:
+                      "Usuario creado exitosamente. Por favor, verifica tu correo electrónico.",
+                  })
+                );
+              });
+            }
+          );
+        });
+      } catch (error) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Formato JSON inválido" }));
+      }
+    });
+
+    return;
+  }
+
+  // Ruta para eliminar usuarios seleccionados
+  if (path === "/deleteUsers" && req.method === "DELETE") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+
+    req.on("end", () => {
+      try {
+        const { userIds } = JSON.parse(body);
+
+        if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({ error: "IDs de usuarios no proporcionados" })
+          );
+          return;
+        }
+
+        let deleteCount = 0;
+        let errors = [];
+
+        userIds.forEach((userId) => {
+          const deleteQuery = "DELETE FROM users WHERE id = ?";
+          connection.query(deleteQuery, [userId], (err, results) => {
+            if (err) {
+              console.error("Error deleting user:", err);
+              errors.push(`Error al eliminar el usuario con ID ${userId}`);
+            } else {
+              deleteCount++;
+            }
+
+            // Verificar si todas las consultas han terminado
+            if (deleteCount + errors.length === userIds.length) {
+              if (errors.length > 0) {
+                res.writeHead(500, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ error: errors.join(", ") }));
+              } else {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({
+                    message:
+                      "Todos los usuarios fueron eliminados exitosamente",
+                  })
+                );
+              }
+            }
+          });
+        });
+      } catch (error) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Formato JSON inválido" }));
+      }
+    });
+
+    return;
+  }
+
+  if (path === "/updateUsers" && req.method === "PUT") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+
+    req.on("end", () => {
+      try {
+        const { selectedUsers } = JSON.parse(body);
+
+        if (
+          !selectedUsers ||
+          !Array.isArray(selectedUsers) ||
+          selectedUsers.length === 0
+        ) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({ error: "Datos de usuarios no proporcionados" })
+          );
+          return;
+        }
+
+        let updateCount = 0;
+        let errors = [];
+
+        selectedUsers.forEach((user) => {
+          const updateQuery =
+            "UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?";
+          connection.query(
+            updateQuery,
+            [user.name, user.email, user.role, user.id],
+            (err, results) => {
+              if (err) {
+                console.error("Error updating user:", err);
+                errors.push(`Error al actualizar el usuario con ID ${user.id}`);
+              } else {
+                updateCount++;
+              }
+
+              // Verificar si todas las consultas han terminado
+              if (updateCount + errors.length === selectedUsers.length) {
+                if (errors.length > 0) {
+                  res.writeHead(500, { "Content-Type": "application/json" });
+                  res.end(JSON.stringify({ error: errors.join(", ") }));
+                } else {
+                  res.writeHead(200, { "Content-Type": "application/json" });
+                  res.end(
+                    JSON.stringify({
+                      message:
+                        "Todos los usuarios fueron actualizados exitosamente",
+                    })
+                  );
+                }
+              }
             }
           );
         });
