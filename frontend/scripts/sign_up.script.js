@@ -18,6 +18,28 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    if (password.length < 8) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "❌ La contraseña debe tener al menos 8 caracteres.",
+      });
+      return;
+    }
+
+    const hasNumber = /\d/.test(password);
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+
+    if (!hasNumber || !hasLetter || !hasSpecial) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "❌ La contraseña debe contener al menos un número y una letra y un caracter especial.",
+      });
+      return;
+    }
+
     const userData = { name, email, password };
 
     try {
@@ -63,3 +85,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+function togglePassword(inputId, button) {
+  const input = document.getElementById(inputId);
+  const icon = button.querySelector("i");
+
+  if (input.type === "password") {
+    input.type = "text";
+    icon.classList.remove("pi-eye");
+    icon.classList.add("pi-eye-slash");
+  } else {
+    input.type = "password";
+    icon.classList.remove("pi-eye-slash");
+    icon.classList.add("pi-eye");
+  }
+}

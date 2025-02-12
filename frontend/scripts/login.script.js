@@ -50,3 +50,18 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     );
   }
 });
+
+function togglePassword(inputId, button) {
+  const input = document.getElementById(inputId);
+  const icon = button.querySelector("i");
+
+  if (input.type === "password") {
+    input.type = "text";
+    icon.classList.remove("pi-eye");
+    icon.classList.add("pi-eye-slash");
+  } else {
+    input.type = "password";
+    icon.classList.remove("pi-eye-slash");
+    icon.classList.add("pi-eye");
+  }
+}
