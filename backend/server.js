@@ -458,6 +458,95 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (path === "/addProduct" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+
+    req.on("end", () => {
+      try {
+        const { name, description, price, image } = JSON.parse(body);
+
+        // Validar los valores esperados
+        if (
+          !name ||
+          !description ||
+          typeof price !== "number" ||
+          price <= 0 ||
+          !image
+        ) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              error:
+                "Valores inválidos. Asegúrate de proporcionar todos los campos correctamente.",
+            })
+          );
+          return;
+        }
+
+        // Convertir la imagen de base64 a Buffer
+        const imageBuffer = Buffer.from(image, "base64");
+
+        const insertProductQuery =
+          "INSERT INTO productos (name, description, price) VALUES (?, ?, ?)";
+
+        connection.query(
+          insertProductQuery,
+          [name, description, price],
+          (err, productResults) => {
+            if (err) {
+              console.error("Error al insertar en la tabla productos:", err);
+              res.writeHead(500, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({ error: "Error al agregar el producto" })
+              );
+              return;
+            }
+
+            // Obtener el ID del producto recién insertado
+            const productId = productResults.insertId;
+
+            const insertImageQuery =
+              "INSERT INTO images_productos (producto_id, image) VALUES (?, ?)";
+
+            connection.query(
+              insertImageQuery,
+              [productId, imageBuffer], // Insertar el ID del producto y el Buffer de la imagen
+              (err, imageResults) => {
+                if (err) {
+                  console.error(
+                    "Error al insertar en la tabla images_productos:",
+                    err
+                  );
+                  res.writeHead(500, { "Content-Type": "application/json" });
+                  res.end(
+                    JSON.stringify({
+                      error: "Error al agregar la imagen del producto",
+                    })
+                  );
+                  return;
+                }
+
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({ message: "Producto agregado exitosamente" })
+                );
+              }
+            );
+          }
+        );
+      } catch (error) {
+        console.error("Error en el servidor:", error);
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Formato JSON inválido" }));
+      }
+    });
+
+    return;
+  }
+
   // Ruta para obtener usuarios
   if (path === "/getUsers" && req.method === "GET") {
     // Consulta para obtener todos los usuarios
@@ -473,6 +562,35 @@ const server = http.createServer((req, res) => {
 
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(results));
+    });
+
+    return;
+  }
+
+  if (path === "/getProducts" && req.method === "GET") {
+    const getProductsQuery = `
+      SELECT p.id, p.name, p.description, p.price, ip.image 
+      FROM productos p
+      LEFT JOIN images_productos ip ON p.id = ip.producto_id
+    `;
+
+    connection.query(getProductsQuery, (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener los productos" }));
+        return;
+      }
+
+      // Convertir la imagen de Buffer a base64
+      const productsWithImages = results.map((product) => {
+        return {
+          ...product,
+          image: product.image ? product.image.toString("base64") : null,
+        };
+      });
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(productsWithImages));
     });
 
     return;

@@ -1,20 +1,13 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const products = [
-    { id: 1, name: "Producto 1", image: "assets/about_us_1.png", link: "#" },
-    { id: 2, name: "Producto 2", image: "assets/about_us_1.png", link: "#" },
-    { id: 3, name: "Producto 3", image: "assets/about_us_1.png", link: "#" },
-    // ... otros productos
-  ];
-
-  const itemsPerPage = 8;
-  let currentPage = 1;
+document.addEventListener("DOMContentLoaded", async function () {
+  const itemsPerPage = 8; // Número de productos por página
+  let currentPage = 1; // Página actual
 
   const dialog = document.getElementById("product-dialog");
   const addProductBtn = document.getElementById("add-product-btn");
   const cancelBtn = document.getElementById("cancel-btn");
   const productForm = document.getElementById("product-form");
 
-  // Abrir el diálogo
+  // Abrir el diálogo para agregar un nuevo producto
   addProductBtn.addEventListener("click", () => {
     dialog.showModal();
   });
@@ -24,8 +17,8 @@ document.addEventListener("DOMContentLoaded", function () {
     dialog.close();
   });
 
-  // Manejar el envío del formulario
-  productForm.addEventListener("submit", (e) => {
+  // Manejar el envío del formulario para agregar un nuevo producto
+  productForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const name = document.getElementById("product-name").value;
@@ -34,33 +27,91 @@ document.addEventListener("DOMContentLoaded", function () {
     const imageFile = document.getElementById("product-image").files[0];
 
     if (!imageFile) {
-      alert("Por favor, selecciona una imagen.");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Por favor, selecciona una imagen.",
+      });
       return;
     }
 
-    // Crear una URL temporal para la imagen subida
-    const imageUrl = URL.createObjectURL(imageFile);
+    const maxSize = 2 * 1024 * 1024; // 2 MB
 
-    const newProduct = {
-      id: products.length + 1,
-      name,
-      description,
-      price,
-      image: imageUrl, // Usar la URL temporal
-      link: "#",
+    if (imageFile.size > maxSize) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "La imagen es demasiado grande. El tamaño máximo permitido es de 2 MB.",
+      });
+      return;
+    }
+
+    // Convertir la imagen a base64
+    const reader = new FileReader();
+    reader.readAsDataURL(imageFile);
+    reader.onload = async () => {
+      const imageBase64 = reader.result.split(",")[1]; // Eliminar el prefijo "data:image/..."
+
+      // Enviar el nuevo producto al servidor
+      try {
+        const response = await fetch("http://localhost:3000/addProduct", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            price,
+            image: imageBase64, // Enviar la imagen en base64
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // Cerrar el diálogo y resetear el formulario
+          dialog.close();
+          productForm.reset();
+          Swal.fire({
+            icon: "success",
+            title: "Producto agregado",
+            text: `El producto "${name}" ha sido agregado correctamente.`,
+          });
+
+          // Recargar la lista de productos
+          await displayProducts(currentPage);
+        } else {
+          const error = await response.json();
+          alert(`Error: ${error.message}`);
+        }
+      } catch (error) {
+        console.error("Error al agregar el producto:", error);
+        alert("Error al agregar el producto. Por favor, inténtalo de nuevo.");
+      }
     };
-
-    console.log(newProduct);
-
-    products.push(newProduct);
-    displayProducts(currentPage);
-    dialog.close();
-    productForm.reset();
   });
 
-  function displayProducts(page) {
+  // Función para obtener los productos desde el servidor
+  async function fetchProducts() {
+    try {
+      const response = await fetch("http://localhost:3000/getProducts");
+      if (!response.ok) {
+        throw new Error("Error al obtener los productos");
+      }
+      const products = await response.json();
+      return products;
+    } catch (error) {
+      console.error("Error:", error);
+      return [];
+    }
+  }
+
+  // Función para mostrar los productos en la página
+  async function displayProducts(page) {
     const catalog = document.getElementById("catalog");
     catalog.innerHTML = "";
+
+    const products = await fetchProducts();
 
     const start = (page - 1) * itemsPerPage;
     const end = start + itemsPerPage;
@@ -71,27 +122,41 @@ document.addEventListener("DOMContentLoaded", function () {
       productElement.className = "product";
 
       const productLink = document.createElement("a");
-      productLink.href = product.link;
+      productLink.href = product.link || "#"; // Usar el enlace del producto si está disponible
 
       const productImage = document.createElement("img");
-      productImage.src = product.image;
+      productImage.src = product.image
+        ? `data:image/png;base64,${product.image}`
+        : "assets/default-image.png"; // Mostrar la imagen en base64 o una imagen por defecto
       productImage.alt = product.name;
 
       const productName = document.createElement("div");
       productName.className = "product-name";
       productName.textContent = product.name;
 
+      const productDescription = document.createElement("div");
+      productDescription.className = "product-description";
+      productDescription.textContent = product.description;
+
+      const productPrice = document.createElement("div");
+      productPrice.className = "product-price";
+      productPrice.textContent = `$${product.price.toFixed(2)}`;
+
       productLink.appendChild(productImage);
       productElement.appendChild(productLink);
       productElement.appendChild(productName);
+      productElement.appendChild(productDescription);
+      productElement.appendChild(productPrice);
       catalog.appendChild(productElement);
     });
   }
 
-  function setupPagination() {
+  // Función para configurar la paginación
+  async function setupPagination() {
     const pagination = document.getElementById("pagination");
     pagination.innerHTML = "";
 
+    const products = await fetchProducts();
     const pageCount = Math.ceil(products.length / itemsPerPage);
 
     for (let i = 1; i <= pageCount; i++) {
@@ -109,6 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
     updatePaginationButtons();
   }
 
+  // Función para actualizar los botones de paginación
   function updatePaginationButtons() {
     const buttons = document.querySelectorAll("#pagination button");
     buttons.forEach((button, index) => {
@@ -120,6 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  displayProducts(currentPage);
-  setupPagination();
+  // Inicializar la carga de productos y la paginación
+  await displayProducts(currentPage);
+  await setupPagination();
 });
