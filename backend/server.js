@@ -547,6 +547,51 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (path === "/deleteProduct" && req.method === "DELETE") {
+    // Obtener el ID del producto desde los parámetros de la URL
+    const urlParams = new URLSearchParams(req.url.split("?")[1]); // Extrae los parámetros de la URL
+    const productId = urlParams.get("id"); // Obtiene el valor del parámetro "id"
+
+    // Verificar que productId esté presente y sea válido
+    if (!productId || isNaN(productId)) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "ID de producto no válido" }));
+      return;
+    }
+
+    // Eliminar las imágenes asociadas al producto
+    const deleteImgProductQuery =
+      "DELETE FROM images_productos WHERE producto_id = ?";
+
+    connection.query(deleteImgProductQuery, [productId], (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "Error al eliminar la imagen del producto",
+          })
+        );
+        return;
+      }
+
+      // Si la eliminación de la imagen fue exitosa, procedemos a eliminar el producto
+      const deleteProductQuery = "DELETE FROM productos WHERE id = ?";
+
+      connection.query(deleteProductQuery, [productId], (err, results) => {
+        if (err) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Error al eliminar el producto" }));
+          return;
+        }
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "Producto eliminado exitosamente" }));
+      });
+    });
+
+    return;
+  }
+
   // Ruta para obtener usuarios
   if (path === "/getUsers" && req.method === "GET") {
     // Consulta para obtener todos los usuarios
@@ -596,6 +641,49 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (path === "/getProduct" && req.method === "GET") {
+    const productId = parsedUrl.query.id;
+
+    if (!productId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "ID de producto no proporcionado" }));
+      return;
+    }
+
+    const getProductQuery = `
+      SELECT p.id, p.name, p.description, p.price, ip.image 
+      FROM productos p
+      LEFT JOIN images_productos ip ON p.id = ip.producto_id
+      WHERE p.id = ?
+    `;
+
+    connection.query(getProductQuery, [productId], (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener el producto" }));
+        return;
+      }
+
+      if (results.length === 0) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Producto no encontrado" }));
+        return;
+      }
+
+      const product = results[0];
+
+      // Convertir la imagen de Buffer a base64
+      const productWithImage = {
+        ...product,
+        image: product.image ? product.image.toString("base64") : null,
+      };
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(productWithImage));
+    });
+
+    return;
+  }
   // Ruta no encontrada
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Ruta no encontrada");

@@ -107,6 +107,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Función para mostrar los productos en la página
+  // Función para mostrar los productos en la página
   async function displayProducts(page) {
     const catalog = document.getElementById("catalog");
     catalog.innerHTML = "";
@@ -121,8 +122,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       const productElement = document.createElement("div");
       productElement.className = "product";
 
+      // Enlace al producto con su ID
       const productLink = document.createElement("a");
-      productLink.href = product.link || "#"; // Usar el enlace del producto si está disponible
+      productLink.href = `producto_view.html?id=${product.id}`; // Redirige a la vista del producto con el ID
+      productLink.style.textDecoration = "none"; // Quitar subrayado del enlace
+      productLink.style.color = "inherit"; // Mantener el color del texto
 
       const productImage = document.createElement("img");
       productImage.src = product.image
@@ -143,10 +147,10 @@ document.addEventListener("DOMContentLoaded", async function () {
       productPrice.textContent = `$${product.price.toFixed(2)}`;
 
       productLink.appendChild(productImage);
+      productLink.appendChild(productName);
+      productLink.appendChild(productDescription);
+      productLink.appendChild(productPrice);
       productElement.appendChild(productLink);
-      productElement.appendChild(productName);
-      productElement.appendChild(productDescription);
-      productElement.appendChild(productPrice);
       catalog.appendChild(productElement);
     });
   }
