@@ -3,6 +3,8 @@ const mysql = require("mysql");
 const url = require("url");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const multer = require("multer");
+const upload = multer();
 
 // Configuración de conexión a MySQL
 const connection = mysql.createConnection({
@@ -542,6 +544,91 @@ const server = http.createServer((req, res) => {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Formato JSON inválido" }));
       }
+    });
+
+    return;
+  }
+
+  if (path === "/updateProduct" && req.method === "PUT") {
+    upload.none()(req, res, async function (err) {
+      if (err) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al procesar el formulario" }));
+        return;
+      }
+
+      const productId = new URLSearchParams(req.url.split("?")[1]).get("id");
+
+      if (!productId || isNaN(productId)) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "ID de producto no válido" }));
+        return;
+      }
+
+      const { name, description, price } = req.body;
+      const image = req.body.image; // Esto viene en base64 si es una imagen
+
+      if (!name || !description || isNaN(price) || price <= 0) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error:
+              "Valores inválidos. Asegúrate de proporcionar todos los campos correctamente.",
+          })
+        );
+        return;
+      }
+
+      // Convertir la imagen de base64 a Buffer si se envió
+      const imageBuffer = image ? Buffer.from(image, "base64") : null;
+
+      const updateProductQuery =
+        "UPDATE productos SET name = ?, description = ?, price = ? WHERE id = ?";
+
+      connection.query(
+        updateProductQuery,
+        [name, description, price, productId],
+        (err) => {
+          if (err) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({ error: "Error al actualizar el producto" })
+            );
+            return;
+          }
+
+          if (imageBuffer) {
+            const updateImageQuery =
+              "UPDATE images_productos SET image = ? WHERE producto_id = ?";
+
+            connection.query(
+              updateImageQuery,
+              [imageBuffer, productId],
+              (err) => {
+                if (err) {
+                  res.writeHead(500, { "Content-Type": "application/json" });
+                  res.end(
+                    JSON.stringify({ error: "Error al actualizar la imagen" })
+                  );
+                  return;
+                }
+
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({
+                    message: "Producto e imagen actualizados exitosamente",
+                  })
+                );
+              }
+            );
+          } else {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({ message: "Producto actualizado exitosamente" })
+            );
+          }
+        }
+      );
     });
 
     return;

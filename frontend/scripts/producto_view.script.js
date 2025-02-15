@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", async function () {
-  // Obtener el ID del producto desde la URL
   const urlParams = new URLSearchParams(window.location.search);
   const productId = urlParams.get("id");
 
@@ -12,18 +11,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-  // Obtener la información del producto desde el servidor
+  let product;
+
   try {
     const response = await fetch(
       `http://localhost:3000/getProduct?id=${productId}`
     );
-    if (!response.ok) {
-      throw new Error("Error al obtener el producto");
-    }
+    if (!response.ok) throw new Error("Error al obtener el producto");
+    product = await response.json();
 
-    const product = await response.json();
-
-    // Mostrar la información del producto en la página
     const productoImagen = document.querySelector(".producto-imagen img");
     const productoNombre = document.querySelector(".producto-nombre");
     const productoDescripcion = document.querySelector(".producto-descripcion");
@@ -31,10 +27,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     productoImagen.src = product.image
       ? `data:image/png;base64,${product.image}`
-      : "assets/default-image.png"; // Mostrar la imagen en base64 o una imagen por defecto
+      : "assets/default-image.png";
     productoNombre.textContent = product.name;
     productoDescripcion.textContent = product.description;
     productoPrecio.textContent = `$${product.price.toFixed(2)}`;
+
+    const btEditar = document.querySelector(".btn-editar");
+    btEditar.addEventListener("click", () => openDialog(product));
 
     const btEliminar = document.querySelector(".btn-eliminar");
     btEliminar.addEventListener("click", async () => {
@@ -53,13 +52,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         try {
           const response = await fetch(
             `http://localhost:3000/deleteProduct?id=${productId}`,
-            {
-              method: "DELETE",
-            }
+            { method: "DELETE" }
           );
-          if (!response.ok) {
-            throw new Error("Error al eliminar el producto");
-          }
+          if (!response.ok) throw new Error("Error al eliminar el producto");
 
           Swal.fire({
             icon: "success",
@@ -90,3 +85,79 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
   }
 });
+
+function openDialog(product) {
+  const dialog = document.getElementById("dialog-editar");
+  const nombreInput = document.getElementById("nombre");
+  const descripcionInput = document.getElementById("descripcion");
+  const precioInput = document.getElementById("precio");
+  const imagenInput = document.getElementById("imagen");
+  const previewImagen = document.getElementById("preview-imagen");
+
+  nombreInput.value = product.name;
+  descripcionInput.value = product.description;
+  precioInput.value = product.price;
+  previewImagen.src = product.image
+    ? `data:image/png;base64,${product.image}`
+    : "assets/default-image.png";
+  previewImagen.style.display = "block";
+
+  dialog.style.display = "flex";
+
+  imagenInput.addEventListener("change", function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        previewImagen.src = e.target.result;
+        previewImagen.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  const formEditar = document.getElementById("form-editar");
+  formEditar.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("name", nombreInput.value);
+    formData.append("description", descripcionInput.value);
+    formData.append("price", precioInput.value);
+    if (imagenInput.files[0]) {
+      formData.append("image", imagenInput.files[0]);
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/updateProduct?id=${product.id}`,
+        { method: "PUT", body: formData }
+      );
+
+      if (!response.ok) throw new Error("Error al actualizar el producto");
+
+      Swal.fire({
+        icon: "success",
+        title: "Producto actualizado",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      console.error("Error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo actualizar el producto.",
+      });
+    }
+  });
+}
+
+function closeDialog() {
+  const dialog = document.getElementById("dialog-editar");
+  dialog.style.display = "none";
+}
