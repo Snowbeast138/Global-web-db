@@ -36,37 +36,50 @@ const transporter = nodemailer.createTransport({
 });
 
 function generatePDF(cartItems, totalPrice, userEmail) {
-  const doc = new PDFDocument();
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    const dirPath = path.join(__dirname, "compras");
 
-  // Crea el nombre del archivo PDF y su ruta
-  const filePath = path.join(__dirname, "compras", `${Date.now()}_compra.pdf`);
+    // Crear la carpeta si no existe
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
 
-  doc.pipe(fs.createWriteStream(filePath));
+    const filePath = path.join(dirPath, `${Date.now()}_compra.pdf`);
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
 
-  doc.fontSize(20).text("Factura de Compra", { align: "center" });
+    doc.fontSize(20).text("Factura de Compra", { align: "center" });
+    doc.moveDown(2);
+    doc.fontSize(14).text("Productos Comprados:", { align: "left" });
 
-  doc.moveDown(2);
-  doc.fontSize(14).text("Productos Comprados:", { align: "left" });
+    cartItems.forEach((item) => {
+      doc.text(
+        `${item.name} - $${item.price} x ${item.cantidad} = $${(
+          item.price * item.cantidad
+        ).toFixed(2)}`
+      );
+    });
 
-  cartItems.forEach((item) => {
-    doc.text(
-      `${item.name} - $${item.price} x ${item.cantidad} = $${(
-        item.price * item.cantidad
-      ).toFixed(2)}`
-    );
+    doc.moveDown(2);
+    doc.text(`Subtotal: $${totalPrice.toFixed(2)}`, { align: "right" });
+    doc.moveDown(1);
+    doc.text(`Total: $${totalPrice.toFixed(2)}`, { align: "right" });
+    doc.moveDown(2);
+    doc.text(`Gracias por su compra!`, { align: "center" });
+
+    doc.end();
+
+    stream.on("finish", () => {
+      console.log("PDF generado correctamente en:", filePath);
+      resolve(filePath);
+    });
+
+    stream.on("error", (error) => {
+      console.error("Error generando el PDF:", error);
+      reject(error);
+    });
   });
-
-  doc.moveDown(2);
-  doc.text(`Subtotal: $${totalPrice.toFixed(2)}`, { align: "right" });
-  doc.moveDown(1);
-  doc.text(`Total: $${totalPrice.toFixed(2)}`, { align: "right" });
-
-  doc.moveDown(2);
-  doc.text(`Gracias por su compra!`, { align: "center" });
-
-  doc.end();
-
-  return filePath;
 }
 
 // Crear servidor
@@ -99,7 +112,7 @@ const server = http.createServer((req, res) => {
     }
 
     const emailQuery = "SELECT email FROM users WHERE id = ?";
-    connection.query(emailQuery, [userId], (err, results) => {
+    connection.query(emailQuery, [userId], async (err, results) => {
       if (err) {
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Error al obtener el correo" }));
@@ -114,9 +127,14 @@ const server = http.createServer((req, res) => {
 
       const userEmail = results[0].email;
 
-      const getCartQuery = `SELECT c.id, p.name, p.price, c.cantidad FROM carrito c INNER JOIN productos p ON c.id_producto = p.id WHERE c.id_cliente = ?`;
+      const getCartQuery = `
+        SELECT c.id, p.name, p.price, c.cantidad, c.id_producto 
+        FROM carrito c 
+        INNER JOIN productos p ON c.id_producto = p.id 
+        WHERE c.id_cliente = ?
+      `;
 
-      connection.query(getCartQuery, [userId], (err, results) => {
+      connection.query(getCartQuery, [userId], async (err, results) => {
         if (err) {
           res.writeHead(500, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "Error al obtener el carrito" }));
@@ -135,46 +153,177 @@ const server = http.createServer((req, res) => {
           0
         );
 
-        const filePath = generatePDF(cartItems, totalPrice, userEmail);
+        // Insertar en la tabla `pedidos`
+        const insertPedidoQuery = `
+          INSERT INTO pedidos (id_cliente, date) 
+          VALUES (?, NOW())
+        `;
 
-        const mailOptions = {
-          from: "snowbeast138.com",
-          to: userEmail,
-          subject: "Factura de Compra",
-          text: `Gracias por su compra.Aqui esta su factura`,
-          attachments: [
-            {
-              filename: "factura.pdf",
-              path: filePath,
-            },
-          ],
-        };
+        connection.query(
+          insertPedidoQuery,
+          [userId],
+          async (err, pedidoResults) => {
+            if (err) {
+              res.writeHead(500, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: "Error al crear el pedido" }));
+              return;
+            }
 
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error("Error enviando el correo:", error);
-            res.writeHead(500, { "Content-Type": "application/json" });
-            res.end(
-              JSON.stringify({
-                error: "Error enviando el correo de la factura",
-              })
+            const pedidoId = pedidoResults.insertId;
+
+            // Insertar en la tabla `inventario_pedido`
+            const insertInventarioQuery = `
+            INSERT INTO inventario_pedido (id_pedido, id_producto, piezas) 
+            VALUES (?, ?, ?)
+          `;
+
+            let inventarioErrors = [];
+
+            cartItems.forEach((item) => {
+              connection.query(
+                insertInventarioQuery,
+                [pedidoId, item.id_producto, item.cantidad],
+                (err) => {
+                  if (err) {
+                    inventarioErrors.push(
+                      `Error al insertar el producto ${item.id_producto} en el inventario`
+                    );
+                  }
+                }
+              );
+            });
+
+            if (inventarioErrors.length > 0) {
+              res.writeHead(500, { "Content-Type": "application/json" });
+              res.end(JSON.stringify({ error: inventarioErrors.join(", ") }));
+              return;
+            }
+
+            // Insertar en la tabla `notas`
+            const insertNotaQuery = `
+            INSERT INTO notas (id_pedido, total) 
+            VALUES (?, ?)
+          `;
+
+            connection.query(
+              insertNotaQuery,
+              [pedidoId, totalPrice],
+              async (err, notaResults) => {
+                if (err) {
+                  res.writeHead(500, { "Content-Type": "application/json" });
+                  res.end(JSON.stringify({ error: "Error al crear la nota" }));
+                  return;
+                }
+
+                const notaId = notaResults.insertId;
+
+                try {
+                  // Generar el PDF
+                  console.log("Generando PDF...");
+                  const filePath = await generatePDF(
+                    cartItems,
+                    totalPrice,
+                    userEmail
+                  );
+                  console.log("PDF generado en:", filePath);
+
+                  // Verificar que el archivo existe antes de intentar leerlo
+                  if (!fs.existsSync(filePath)) {
+                    res.writeHead(500, { "Content-Type": "application/json" });
+                    res.end(
+                      JSON.stringify({
+                        error: "El archivo PDF no se generó correctamente",
+                      })
+                    );
+                    return;
+                  }
+
+                  // Leer el archivo PDF como un Buffer
+                  const pdfBuffer = fs.readFileSync(filePath);
+
+                  // Insertar el PDF en la tabla `files_notas`
+                  const insertFileQuery = `
+                INSERT INTO files_notas (id_nota, file) 
+                VALUES (?, ?)
+              `;
+
+                  connection.query(
+                    insertFileQuery,
+                    [notaId, pdfBuffer],
+                    async (err, fileResults) => {
+                      if (err) {
+                        res.writeHead(500, {
+                          "Content-Type": "application/json",
+                        });
+                        res.end(
+                          JSON.stringify({ error: "Error al guardar el PDF" })
+                        );
+                        return;
+                      }
+
+                      // Enviar el correo con el PDF adjunto
+                      const mailOptions = {
+                        from: "snowbeast138.com",
+                        to: userEmail,
+                        subject: "Factura de Compra",
+                        text: `Gracias por su compra. Aquí está su factura.`,
+                        attachments: [
+                          {
+                            filename: "factura.pdf",
+                            path: filePath,
+                          },
+                        ],
+                      };
+
+                      try {
+                        const info = await transporter.sendMail(mailOptions);
+                        console.log("Email sent:", info.response);
+
+                        // Eliminar el archivo PDF después de enviar el correo
+                        fs.unlink(filePath, (err) => {
+                          if (err) {
+                            console.error(
+                              "Error eliminando el archivo PDF:",
+                              err
+                            );
+                          }
+                        });
+
+                        res.writeHead(200, {
+                          "Content-Type": "application/json",
+                        });
+                        res.end(
+                          JSON.stringify({
+                            message: "Factura enviada y guardada exitosamente",
+                          })
+                        );
+                      } catch (error) {
+                        console.error("Error enviando el correo:", error);
+                        res.writeHead(500, {
+                          "Content-Type": "application/json",
+                        });
+                        res.end(
+                          JSON.stringify({
+                            error: "Error enviando el correo de la factura",
+                          })
+                        );
+                      }
+                    }
+                  );
+                } catch (error) {
+                  console.error("Error generando o leyendo el PDF:", error);
+                  res.writeHead(500, { "Content-Type": "application/json" });
+                  res.end(JSON.stringify({ error: "Error generando el PDF" }));
+                }
+              }
             );
-            return;
           }
-          console.log("Email sent:", info.response);
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(
-            JSON.stringify({
-              message: "Factura enviada exitosamente",
-            })
-          );
-        });
+        );
       });
     });
 
     return;
   }
-
   // Ruta para registro de usuarios
   if (path === "/signup" && req.method === "POST") {
     let body = "";
