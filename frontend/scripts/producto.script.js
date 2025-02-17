@@ -7,6 +7,12 @@ document.addEventListener("DOMContentLoaded", async function () {
   const cancelBtn = document.getElementById("cancel-btn");
   const productForm = document.getElementById("product-form");
 
+  const userRole = sessionStorage.getItem("userRole");
+
+  if (userRole === "CLIENT") {
+    addProductBtn.style.display = "none";
+  }
+
   // Abrir el diálogo para agregar un nuevo producto
   addProductBtn.addEventListener("click", () => {
     dialog.showModal();
