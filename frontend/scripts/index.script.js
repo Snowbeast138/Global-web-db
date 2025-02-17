@@ -1,3 +1,35 @@
+let inactivityTime = 0;
+let logoutTime = 300000; // 5min
+
+function resetInactivityTimer() {
+  inactivityTime = 0;
+}
+
+// Función para hacer logout
+function logout() {
+  sessionStorage.clear(); // Limpiar sessionStoragelogin.html";
+  window.location.href = "login.html"; // Redirigir a la página de login
+}
+
+window.onload = function () {
+  // Detectar actividad del usuario
+  document.onmousemove = resetInactivityTimer;
+  document.onkeypress = resetInactivityTimer;
+  document.onclick = resetInactivityTimer;
+
+  setInterval(function () {
+    inactivityTime += 1000;
+
+    if (inactivityTime >= logoutTime) {
+      logout();
+    }
+  }, 1000);
+
+  if (!sessionStorage.getItem("userRole")) {
+    logout();
+  }
+};
+
 window.addEventListener("DOMContentLoaded", function () {
   const userRole = sessionStorage.getItem("userRole");
 
