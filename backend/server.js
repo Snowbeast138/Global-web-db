@@ -672,6 +672,36 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (path === "/user" && req.method === "GET") {
+    const userEmail = parsedUrl.query.email;
+
+    if (!userEmail) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Email de usuario no proporcionado" }));
+      return;
+    }
+
+    const getUserQuery = "SELECT * FROM users WHERE email = ?";
+    connection.query(getUserQuery, [userEmail], (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener el usuario" }));
+        return;
+      }
+
+      if (results.length === 0) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Usuario no encontrado" }));
+        return;
+      }
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(results[0]));
+    });
+
+    return;
+  }
+
   if (path === "/getProducts" && req.method === "GET") {
     const getProductsQuery = `
       SELECT p.id, p.name, p.description, p.price, ip.image 

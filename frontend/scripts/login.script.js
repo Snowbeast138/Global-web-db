@@ -14,16 +14,43 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     });
 
     if (response.status === 200) {
-      Swal.fire({
-        icon: "success",
-        title: "Login exitoso",
-        text: "✅ Bienvenido",
-        confirmButtonText: "Continuar",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = "index.html";
+      // Después de un login exitoso, consulta el usuario por su email
+      const userResponse = await fetch(
+        `http://localhost:3000/user?email=${email}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
+
+      if (userResponse.status === 200) {
+        const userData = await userResponse.json(); // Obtener los datos del usuario
+        const { id, role } = userData; // Extraer id y role
+
+        // Guarda los valores en sessionStorage
+        sessionStorage.setItem("userId", id);
+        sessionStorage.setItem("userRole", role);
+
+        // Muestra el mensaje de éxito
+        Swal.fire({
+          icon: "success",
+          title: "Login exitoso",
+          text: "✅ Bienvenido",
+          confirmButtonText: "Continuar",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = "index.html"; // Redirige a la página principal
+          }
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "❌ No se pudo obtener la información del usuario.",
+        });
+      }
     } else if (response.status === 401) {
       Swal.fire({
         icon: "error",
