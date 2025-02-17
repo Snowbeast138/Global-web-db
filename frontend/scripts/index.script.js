@@ -1,3 +1,28 @@
+window.addEventListener("DOMContentLoaded", function () {
+  const userRole = sessionStorage.getItem("userRole");
+
+  // Si el rol es CLIENT, ocultamos los elementos
+  if (userRole === "CLIENT" || userRole === "EMPLOYEE") {
+    const restrictedItems = document.querySelectorAll(".restricted");
+    restrictedItems.forEach((item) => {
+      item.style.display = "none"; // Ocultamos los elementos
+    });
+  }
+});
+
+document
+  .getElementById("logout-button")
+  .addEventListener("click", function (event) {
+    // Prevenir el comportamiento por defecto del enlace (que podría redirigir antes de limpiar la sesión)
+    event.preventDefault();
+
+    // Limpiar todos los elementos de sessionStorage
+    sessionStorage.clear(); // O si deseas eliminar solo elementos específicos: sessionStorage.removeItem('userRole');
+
+    // Redirigir al usuario a la página de login después de limpiar la sesión
+    window.location.href = "login.html"; // O redirigir a cualquier página deseada
+  });
+
 let currentIndex = 0;
 const images = document.querySelectorAll(".slider-image");
 const total = images.length;

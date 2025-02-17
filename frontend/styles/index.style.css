@@ -5,6 +5,9 @@ html, body {
   padding: 0;
   font-family: Arial, sans-serif;
 }
+.restricted {
+  display: none;
+}
 
 /* Navbar */
 .navbar {

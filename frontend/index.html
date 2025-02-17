@@ -16,7 +16,7 @@
             <img src="assets/logo.png" alt="Logo" class="logo" />
           </a>
         </li>
-        <li>
+        <li class="nav-item user-role restricted">
           <a href="users.html"><i class="pi pi-users"></i> Usuarios</a>
         </li>
         <li>
@@ -24,7 +24,7 @@
             ><i class="pi pi-shopping-bag"></i> Productos</a
           >
         </li>
-        <li>
+        <li class="nav-item user-role restricted">
           <a href="pedido.html"><i class="pi pi-book"></i> Pedidos</a>
         </li>
         <li>
@@ -35,11 +35,13 @@
         <li>
           <a href="carrito.html"><i class="pi pi-shopping-cart"></i> Carrito</a>
         </li>
-        <li>
+        <li class="nav-item user-role restricted">
           <a href="historial.html"><i class="pi pi-history"></i> Bitácora</a>
         </li>
         <li>
-          <a href="login.html"><i class="pi pi-sign-out"></i> Cerrar Sesión</a>
+          <a href="login.html" id="logout-button"
+            ><i class="pi pi-sign-out"></i> Cerrar Sesión</a
+          >
         </li>
       </ul>
       <button class="menu-toggle" onclick="toggleMenu()">
