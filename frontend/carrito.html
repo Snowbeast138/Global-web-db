@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carrito</title>
+    <link rel="stylesheet" href="styles/index.style.css" />
+    <link rel="stylesheet" href="https://unpkg.com/primeicons/primeicons.css" />
+    <link rel="stylesheet" href="styles/carrito.style.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <ul class="nav-links">
+        <li class="logo-item">
+          <a href="index.html">
+            <img src="assets/logo.png" alt="Logo" class="logo" />
+          </a>
+        </li>
+        <li class="nav-item user-role restricted">
+          <a href="users.html"><i class="pi pi-users"></i> Usuarios</a>
+        </li>
+        <li>
+          <a href="producto.html"
+            ><i class="pi pi-shopping-bag"></i> Productos</a
+          >
+        </li>
+        <li class="nav-item user-role restricted">
+          <a href="pedido.html"><i class="pi pi-book"></i> Pedidos</a>
+        </li>
+        <li>
+          <a href="about_us.html"
+            ><i class="pi pi-info-circle"></i> Acerca de Nosotros</a
+          >
+        </li>
+        <li>
+          <a href="carrito.html"><i class="pi pi-shopping-cart"></i> Carrito</a>
+        </li>
+        <li class="nav-item user-role restricted">
+          <a href="historial.html"><i class="pi pi-history"></i> Bitácora</a>
+        </li>
+        <li>
+          <a href="login.html" id="logout-button"
+            ><i class="pi pi-sign-out"></i> Cerrar Sesión</a
+          >
+        </li>
+      </ul>
+      <button class="menu-toggle" onclick="toggleMenu()">
+        <i class="pi pi-bars"></i>
+      </button>
+    </nav>
+
+    <main class="cart-container">
+      <h1>Carrito de Compras</h1>
+
+      <div class="table-wrapper">
+        <table id="cart-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Imagen</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Precio</th>
+              <th>Cantidad</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <button id="finish-purchase" class="finish-btn">
+        <i class="pi pi-check"></i> Finalizar Compra
+      </button>
+    </main>
+
+    <footer>
+      <p>Desarrollado por: Guillermo Isaac Vallin Cueva &bull; Año 2025</p>
+      <div class="social-icons">
+        <a
+          href="https://www.linkedin.com/in/snowbeast138/"
+          target="_blank"
+          class="social-link"
+        >
+          <i class="pi pi-linkedin"></i> LinkedIn
+        </a>
+        <a
+          href="https://x.com/snowbeast138"
+          target="_blank"
+          class="social-link"
+        >
+          <i class="pi pi-twitter"></i> Twitter
+        </a>
+        <a href="tel:+523323131211" class="social-link">
+          <i class="pi pi-phone"></i> +523323131211
+        </a>
+        <a
+          href="https://github.com/snowbeast138"
+          target="_blank"
+          class="social-link"
+        >
+          <i class="pi pi-github"></i> Snowbeast138
+        </a>
+      </div>
+    </footer>
+
+    <script src="scripts/index.script.js"></script>
+    <script src="scripts/carrito.script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </body>
+</html>

@@ -35,6 +35,42 @@ document.addEventListener("DOMContentLoaded", async function () {
     const userRole = sessionStorage.getItem("userRole");
     const btEliminar = document.querySelector(".btn-eliminar");
     const btEditar = document.querySelector(".btn-editar");
+    const btComprar = document.querySelector(".btn-agregar-carrito");
+
+    btComprar.addEventListener("click", async () => {
+      try {
+        // Suponiendo que tienes los valores de userId, productId y quantity disponibles
+        const userId = sessionStorage.getItem("userId");
+        const productId = urlParams.get("id");
+        const quantity = 1;
+
+        const response = await fetch("http://localhost:3000/addProductToCart", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId, productId, quantity }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al agregar el producto al carrito");
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Producto agregado al carrito",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      } catch (error) {
+        console.error("Error:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo agregar el producto al carrito.",
+        });
+      }
+    });
 
     if (userRole === "CLIENT") {
       btEditar.style.display = "none";

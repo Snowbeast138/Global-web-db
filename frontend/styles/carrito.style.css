@@ -1,0 +1,108 @@
+/* Contenedor del carrito: Ocupa toda la pantalla disponible */
+.cart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: calc(100vh - 80px); /* 100% de la pantalla menos la navbar */
+    padding: 20px;
+    overflow: hidden; /* Evita desplazamientos no deseados */
+  }
+  
+  /* Tabla responsiva */
+  .table-wrapper {
+    width: 100%;
+    max-width: 1200px; /* Limita el ancho en pantallas grandes */
+    overflow-x: auto;
+  }
+  
+  #cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+  
+  #cart-table th,
+  #cart-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  #cart-table th {
+    background-color: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  
+  /* Imágenes responsivas */
+  #cart-table img {
+    width: 50px;
+    height: auto;
+    border-radius: 4px;
+  }
+  
+  /* Estilo de los botones de eliminar */
+  .delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: red;
+    font-size: 20px;
+    transition: transform 0.2s ease;
+  }
+  
+  .delete-btn:hover {
+    transform: scale(1.2);
+  }
+  
+  /* Botón de Finalizar Compra */
+  .finish-btn {
+    margin-top: 20px;
+    padding: 12px 18px;
+    font-size: 16px;
+    color: white;
+    background-color: #28a745;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s ease;
+  }
+  
+  .finish-btn:hover {
+    background-color: #218838;
+  }
+  
+  .finish-btn i {
+    font-size: 18px;
+  }
+  
+  /* Diseño responsivo: tabla en móvil */
+  @media (max-width: 768px) {
+    .cart-container {
+      padding: 10px;
+      height: 100vh; /* Fija el tamaño en móvil */
+    }
+  
+    .table-wrapper {
+      overflow-x: scroll; /* Permite desplazamiento horizontal */
+      max-width: 100%;
+    }
+  
+    #cart-table th,
+    #cart-table td {
+      padding: 10px;
+      font-size: 14px;
+    }
+  
+    .finish-btn {
+      font-size: 14px;
+      padding: 10px 14px;
+    }
+  }
+  

@@ -5,6 +5,9 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const multer = require("multer");
 const upload = multer({ storage: multer.memoryStorage() });
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
+const path = require("path");
 
 // Configuración de conexión a MySQL
 const connection = mysql.createConnection({
@@ -32,6 +35,40 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+function generatePDF(cartItems, totalPrice, userEmail) {
+  const doc = new PDFDocument();
+
+  // Crea el nombre del archivo PDF y su ruta
+  const filePath = path.join(__dirname, "compras", `${Date.now()}_compra.pdf`);
+
+  doc.pipe(fs.createWriteStream(filePath));
+
+  doc.fontSize(20).text("Factura de Compra", { align: "center" });
+
+  doc.moveDown(2);
+  doc.fontSize(14).text("Productos Comprados:", { align: "left" });
+
+  cartItems.forEach((item) => {
+    doc.text(
+      `${item.name} - $${item.price} x ${item.cantidad} = $${(
+        item.price * item.cantidad
+      ).toFixed(2)}`
+    );
+  });
+
+  doc.moveDown(2);
+  doc.text(`Subtotal: $${totalPrice.toFixed(2)}`, { align: "right" });
+  doc.moveDown(1);
+  doc.text(`Total: $${totalPrice.toFixed(2)}`, { align: "right" });
+
+  doc.moveDown(2);
+  doc.text(`Gracias por su compra!`, { align: "center" });
+
+  doc.end();
+
+  return filePath;
+}
+
 // Crear servidor
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -50,6 +87,91 @@ const server = http.createServer((req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204);
     res.end();
+    return;
+  }
+
+  if (path === "/finalizarCompra" && req.method === "POST") {
+    const userId = parsedUrl.query.userId;
+    if (!userId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "ID de usuario no proporcionado" }));
+      return;
+    }
+
+    const emailQuery = "SELECT email FROM users WHERE id = ?";
+    connection.query(emailQuery, [userId], (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener el correo" }));
+        return;
+      }
+
+      if (results.length === 0) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Usuario no encontrado" }));
+        return;
+      }
+
+      const userEmail = results[0].email;
+
+      const getCartQuery = `SELECT c.id, p.name, p.price, c.cantidad FROM carrito c INNER JOIN productos p ON c.id_producto = p.id WHERE c.id_cliente = ?`;
+
+      connection.query(getCartQuery, [userId], (err, results) => {
+        if (err) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Error al obtener el carrito" }));
+          return;
+        }
+
+        const cartItems = results.map((item) => {
+          return {
+            ...item,
+            price: parseFloat(item.price),
+          };
+        });
+
+        const totalPrice = cartItems.reduce(
+          (total, item) => total + item.price * item.cantidad,
+          0
+        );
+
+        const filePath = generatePDF(cartItems, totalPrice, userEmail);
+
+        const mailOptions = {
+          from: "snowbeast138.com",
+          to: userEmail,
+          subject: "Factura de Compra",
+          text: `Gracias por su compra.Aqui esta su factura`,
+          attachments: [
+            {
+              filename: "factura.pdf",
+              path: filePath,
+            },
+          ],
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error("Error enviando el correo:", error);
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({
+                error: "Error enviando el correo de la factura",
+              })
+            );
+            return;
+          }
+          console.log("Email sent:", info.response);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              message: "Factura enviada exitosamente",
+            })
+          );
+        });
+      });
+    });
+
     return;
   }
 
@@ -358,6 +480,45 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (path === "/addProductToCart" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+    req.on("end", () => {
+      try {
+        const { userId, productId, quantity } = JSON.parse(body);
+        const insertQuery = `INSERT INTO carrito (id_cliente, id_producto, cantidad) VALUES (?, ?, ?)`;
+        connection.query(
+          insertQuery,
+          [userId, productId, quantity],
+          (err, results) => {
+            if (err) {
+              console.error("Error inserting product to cart:", err);
+              res.writeHead(500, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({
+                  error: "Error al agregar el producto al carrito",
+                })
+              );
+              return;
+            }
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({
+                message: "Producto agregado al carrito exitosamente",
+              })
+            );
+          }
+        );
+      } catch (error) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Formato JSON inválido" }));
+      }
+    });
+    return;
+  }
+
   // Ruta para verificar el correo electrónico
   if (path === "/verify" && req.method === "GET") {
     const token = parsedUrl.query.token;
@@ -647,6 +808,67 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: "Producto eliminado exitosamente" }));
       });
+    });
+
+    return;
+  }
+
+  if (path === "/removeFromCart" && req.method === "DELETE") {
+    const cartId = parsedUrl.query.cartId;
+    if (!cartId || isNaN(cartId)) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "ID de producto no válido" }));
+      return;
+    }
+    const deleteQuery = "DELETE FROM carrito WHERE id = ?";
+
+    connection.query(deleteQuery, [cartId], (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al eliminar el producto" }));
+        return;
+      }
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: "Producto eliminado exitosamente" }));
+    });
+
+    return;
+  }
+
+  if (path === "/getCart" && req.method === "GET") {
+    const userId = parsedUrl.query.userId;
+
+    if (!userId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "ID de usuario no proporcionado" }));
+      return;
+    }
+
+    const getCartQuery = `
+      SELECT c.id, p.name, p.description, p.price, ip.image, c.cantidad
+      FROM carrito c
+      INNER JOIN productos p ON c.id_producto = p.id
+      LEFT JOIN images_productos ip ON p.id = ip.producto_id
+      WHERE c.id_cliente = ?
+    `;
+
+    connection.query(getCartQuery, [userId], (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener el carrito" }));
+        return;
+      }
+
+      const cartItems = results.map((item) => {
+        return {
+          ...item,
+          image: item.image ? item.image.toString("base64") : null,
+        };
+      });
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(cartItems));
     });
 
     return;
