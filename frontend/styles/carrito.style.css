@@ -104,5 +104,17 @@
       font-size: 14px;
       padding: 10px 14px;
     }
+
+    #paypal-button-container {
+        max-width: 100%; /* Asegura que el botón ocupe todo el ancho en móviles */
+      }
+
   }
   
+  #paypal-button-container {
+    width: 100%; /* Ocupa el 100% del ancho disponible */
+    max-width: 500px; /* Limita el ancho máximo para que no se vea demasiado grande en pantallas grandes */
+    margin: 20px auto; /* Centra el contenedor */
+    padding: 10px; /* Espaciado interno */
+    box-sizing: border-box; /* Incluye el padding en el ancho total */
+  }

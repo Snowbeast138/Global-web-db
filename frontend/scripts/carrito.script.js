@@ -113,6 +113,72 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+document
+  .getElementById("finish-purchase")
+  .addEventListener("click", function () {
+    const userId = sessionStorage.getItem("userId");
+    fetch(`http://localhost:3000/getCart?userId=${userId}`)
+      .then((response) => response.json())
+      .then((cartItems) => {
+        const total = calculateTotal(cartItems);
+
+        // Limpia el contenedor de PayPal antes de renderizar el botón
+        document.getElementById("paypal-button-container").innerHTML = "";
+
+        // Renderiza el botón de PayPal en el contenedor
+        paypal
+          .Buttons({
+            createOrder: function (data, actions) {
+              return actions.order.create({
+                purchase_units: [
+                  {
+                    amount: {
+                      value: total.toFixed(2),
+                      currency_code: "MXN",
+                    },
+                  },
+                ],
+              });
+            },
+            onApprove: function (data, actions) {
+              return actions.order.capture().then(function (details) {
+                Swal.fire({
+                  icon: "success",
+                  title: "Pago completado",
+                  text: `Gracias por tu compra, ${details.payer.name.given_name}!`,
+                }).then(() => {
+                  window.location.href = "index.html";
+                });
+              });
+            },
+            onError: function (err) {
+              Swal.fire({
+                icon: "error",
+                title: "Error en el pago",
+                text: "Hubo un problema al procesar tu pago. Inténtalo de nuevo.",
+              });
+              console.error(err);
+            },
+          })
+          .render("#paypal-button-container"); // Renderiza el botón en el contenedor
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: "error",
+          title: "Error al cargar carrito",
+          text: "Hubo un problema al obtener los datos del carrito.",
+        });
+        console.error("Error al cargar el carrito:", error);
+      });
+  });
+
+function calculateTotal(cartItems) {
+  return cartItems.reduce(
+    (total, item) => total + item.price * item.cantidad,
+    0
+  );
+}
+
 // document
 //   .querySelector("#finish-purchase")
 //   .addEventListener("click", function () {
