@@ -91,30 +91,12 @@ function openDialog(product) {
   const nombreInput = document.getElementById("nombre");
   const descripcionInput = document.getElementById("descripcion");
   const precioInput = document.getElementById("precio");
-  const imagenInput = document.getElementById("imagen");
-  const previewImagen = document.getElementById("preview-imagen");
 
   nombreInput.value = product.name;
   descripcionInput.value = product.description;
   precioInput.value = product.price;
-  previewImagen.src = product.image
-    ? `data:image/png;base64,${product.image}`
-    : "assets/default-image.png";
-  previewImagen.style.display = "block";
 
   dialog.style.display = "flex";
-
-  imagenInput.addEventListener("change", function () {
-    const file = this.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        previewImagen.src = e.target.result;
-        previewImagen.style.display = "block";
-      };
-      reader.readAsDataURL(file);
-    }
-  });
 
   const formEditar = document.getElementById("form-editar");
   formEditar.addEventListener("submit", async function (e) {
@@ -124,9 +106,6 @@ function openDialog(product) {
     formData.append("name", nombreInput.value);
     formData.append("description", descripcionInput.value);
     formData.append("price", precioInput.value);
-    if (imagenInput.files[0]) {
-      formData.append("image", imagenInput.files[0]);
-    }
 
     try {
       const response = await fetch(
