@@ -668,6 +668,26 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (path === "/clearCart" && req.method === "DELETE") {
+    const userId = parsedUrl.query.userId;
+    if (!userId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "ID de usuario no proporcionado" }));
+      return;
+    }
+    const deleteQuery = "DELETE FROM carrito WHERE id_cliente = ?";
+    connection.query(deleteQuery, [userId], (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al eliminar el carrito" }));
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: "Carrito eliminado exitosamente" }));
+    });
+    return;
+  }
+
   // Ruta para verificar el correo electrónico
   if (path === "/verify" && req.method === "GET") {
     const token = parsedUrl.query.token;

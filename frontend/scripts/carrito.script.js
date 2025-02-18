@@ -147,7 +147,39 @@ document
                   title: "Pago completado",
                   text: `Gracias por tu compra, ${details.payer.name.given_name}!`,
                 }).then(() => {
-                  window.location.href = "index.html";
+                  // Finalizar la compra
+                  fetch(
+                    `http://localhost:3000/finalizarCompra?userId=${userId}`,
+                    {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({}), // El cuerpo está vacío porque no estamos pasando más datos
+                    }
+                  )
+                    .then((response) => response.json())
+                    .then((data) => {
+                      if (data.message) {
+                        Swal.fire({
+                          icon: "success",
+                          title: "Compra finalizada",
+                          text: data.message,
+                        });
+                      } else if (data.error) {
+                        Swal.fire({
+                          icon: "error",
+                          title: "Error",
+                          text: data.error,
+                        });
+                      }
+                    })
+                    .catch((error) => {
+                      Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "Hubo un problema al finalizar la compra.",
+                      });
+                      console.error("Error al finalizar la compra:", error);
+                    });
                 });
               });
             },
@@ -178,48 +210,3 @@ function calculateTotal(cartItems) {
     0
   );
 }
-
-// document
-//   .querySelector("#finish-purchase")
-//   .addEventListener("click", function () {
-//     const userId = sessionStorage.getItem("userId");
-
-//     if (!userId) {
-//       Swal.fire({
-//         icon: "error",
-//         title: "Error",
-//         text: "No se ha encontrado la información del usuario.",
-//       });
-//       return;
-//     }
-
-//     fetch(`http://localhost:3000/finalizarCompra?userId=${userId}`, {
-//       method: "POST", // Como es una acción de tipo POST
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({}), // El cuerpo está vacío porque no estamos pasando más datos
-//     })
-//       .then((response) => response.json())
-//       .then((data) => {
-//         if (data.message) {
-//           Swal.fire({
-//             icon: "success",
-//             title: "Compra finalizada",
-//             text: data.message,
-//           });
-//         } else if (data.error) {
-//           Swal.fire({
-//             icon: "error",
-//             title: "Error",
-//             text: data.error,
-//           });
-//         }
-//       })
-//       .catch((error) => {
-//         Swal.fire({
-//           icon: "error",
-//           title: "Error",
-//           text: "Hubo un problema al finalizar la compra.",
-//         });
-//         console.error("Error al finalizar la compra:", error);
-//       });
-//   });
