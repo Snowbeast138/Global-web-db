@@ -1281,6 +1281,61 @@ const server = http.createServer((req, res) => {
 
     return;
   }
+
+  if (path === "/getBitacora" && req.method === "GET") {
+    const getBitacoraQuery = `SELECT * FROM bitacora`;
+    connection.query(getBitacoraQuery, (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener la bitácora" }));
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(results));
+    });
+    return;
+  }
+
+  if (path === "/getPedidos" && req.method === "GET") {
+    const getPedidosQuery = `
+      SELECT 
+    p.id AS pedido_id,
+    u.name AS cliente_nombre,
+    p.date AS fecha_pedido,
+    n.total AS total_pedido,
+    f.file AS archivo_adjunto,
+    CONCAT('[', GROUP_CONCAT(
+        CONCAT(
+            '{"id_producto": ', i.id_producto, 
+            ', "nombre": "', pr.name, '"',
+            ', "descripcion": "', pr.description, '"',
+            ', "precio": ', pr.price,
+            ', "piezas": ', i.piezas, '}'
+        )
+        SEPARATOR ','
+    ), ']') AS productos
+FROM pedidos p
+JOIN users u ON p.id_cliente = u.id
+JOIN inventario_pedido i ON p.id = i.id_pedido
+JOIN productos pr ON i.id_producto = pr.id
+LEFT JOIN notas n ON p.id = n.id_pedido
+LEFT JOIN files_notas f ON n.id = f.id_nota
+GROUP BY p.id, u.name, p.date, n.total, f.file
+ORDER BY p.id;
+
+    `;
+    connection.query(getPedidosQuery, (err, results) => {
+      if (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener los pedidos" }));
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(results));
+    });
+    return;
+  }
+
   // Ruta no encontrada
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Ruta no encontrada");
