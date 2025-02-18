@@ -37,7 +37,7 @@ const transporter = nodemailer.createTransport({
 
 function generatePDF(cartItems, totalPrice, userEmail) {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ margin: 50 });
     const dirPath = path.join(__dirname, "compras");
 
     // Crear la carpeta si no existe
@@ -49,24 +49,141 @@ function generatePDF(cartItems, totalPrice, userEmail) {
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    doc.fontSize(20).text("Factura de Compra", { align: "center" });
-    doc.moveDown(2);
-    doc.fontSize(14).text("Productos Comprados:", { align: "left" });
+    // Agregar el logo y datos de la empresa en el encabezado
+    const logoPath = path.join(__dirname, "logo.png");
+    if (fs.existsSync(logoPath)) {
+      doc.image(logoPath, 50, 40, { width: 100 });
+    }
 
-    cartItems.forEach((item) => {
-      doc.text(
-        `${item.name} - $${item.price} x ${item.cantidad} = $${(
-          item.price * item.cantidad
-        ).toFixed(2)}`
+    doc
+      .fontSize(20)
+      .text("Factura de Compra", 200, 50, { align: "right" })
+      .moveDown(1);
+
+    doc
+      .fontSize(12)
+      .text("Empresa: Prietos y Asociados Ternu", { align: "right" })
+      .text("Correo: prietosyasociadosternu@gmail.com", { align: "right" })
+      .text("Teléfono: +52 33 2313 1211", { align: "right" })
+      .moveDown(2);
+
+    doc.fontSize(14).text(`Cliente: ${userEmail}`, { align: "left" });
+    doc.moveDown(1);
+
+    // Dibujar la tabla de productos
+    const startX = 50;
+    let startY = doc.y + 10;
+
+    doc.fontSize(12).text("Productos Comprados:", startX, startY).moveDown(1);
+
+    startY = doc.y;
+    const colWidths = [150, 150, 80, 80, 100]; // Ancho de cada columna
+    const rowHeight = 25;
+
+    // Dibujar encabezados de la tabla
+    doc
+      .font("Helvetica-Bold")
+      .text("Producto", startX, startY, { width: colWidths[0], align: "left" })
+      .text("Descripción", startX + colWidths[0], startY, {
+        width: colWidths[1],
+        align: "left",
+      })
+      .text("Precio", startX + colWidths[0] + colWidths[1], startY, {
+        width: colWidths[2],
+        align: "right",
+      })
+      .text(
+        "Cantidad",
+        startX + colWidths[0] + colWidths[1] + colWidths[2],
+        startY,
+        {
+          width: colWidths[3],
+          align: "right",
+        }
+      )
+      .text(
+        "Subtotal",
+        startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3],
+        startY,
+        {
+          width: colWidths[4],
+          align: "right",
+        }
       );
+
+    // Dibujar línea separadora
+    doc
+      .moveTo(startX, startY + rowHeight)
+      .lineTo(startX + colWidths.reduce((a, b) => a + b), startY + rowHeight)
+      .stroke();
+
+    startY += rowHeight;
+
+    // Dibujar cada fila de producto
+    doc.font("Helvetica");
+    cartItems.forEach((item) => {
+      doc
+        .text(item.name, startX, startY, { width: colWidths[0], align: "left" })
+        .text(item.description, startX + colWidths[0], startY, {
+          width: colWidths[1],
+          align: "left",
+        })
+        .text(
+          `$${item.price.toFixed(2)}`,
+          startX + colWidths[0] + colWidths[1],
+          startY,
+          {
+            width: colWidths[2],
+            align: "right",
+          }
+        )
+        .text(
+          `${item.cantidad}`,
+          startX + colWidths[0] + colWidths[1] + colWidths[2],
+          startY,
+          {
+            width: colWidths[3],
+            align: "right",
+          }
+        )
+        .text(
+          `$${(item.price * item.cantidad).toFixed(2)}`,
+          startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3],
+          startY,
+          { width: colWidths[4], align: "right" }
+        );
+
+      startY += rowHeight;
     });
 
-    doc.moveDown(2);
-    doc.text(`Subtotal: $${totalPrice.toFixed(2)}`, { align: "right" });
-    doc.moveDown(1);
-    doc.text(`Total: $${totalPrice.toFixed(2)}`, { align: "right" });
-    doc.moveDown(2);
-    doc.text(`Gracias por su compra!`, { align: "center" });
+    // Dibujar línea separadora antes del total
+    doc
+      .moveTo(startX, startY + 10)
+      .lineTo(startX + colWidths.reduce((a, b) => a + b), startY + 10)
+      .stroke();
+
+    // Agregar total
+    startY += 20;
+    doc
+      .font("Helvetica-Bold")
+      .text(
+        "Total:",
+        startX + colWidths[0] + colWidths[1] + colWidths[2],
+        startY,
+        {
+          width: colWidths[3],
+          align: "right",
+        }
+      )
+      .text(
+        `$${totalPrice.toFixed(2)}`,
+        startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3],
+        startY,
+        {
+          width: colWidths[4],
+          align: "right",
+        }
+      );
 
     doc.end();
 
@@ -81,7 +198,6 @@ function generatePDF(cartItems, totalPrice, userEmail) {
     });
   });
 }
-
 // Crear servidor
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
