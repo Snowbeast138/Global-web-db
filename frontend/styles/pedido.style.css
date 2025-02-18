@@ -1,0 +1,103 @@
+/* Estilos generales */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  main {
+    flex-grow: 1;
+    margin-top: 60px;
+  }
+  
+  /* Tabla de Pedidos */
+  #pedidoTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    overflow-x: auto;
+    display: block;
+  }
+  
+  #pedidoTable th, #pedidoTable td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  
+  #pedidoTable th {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  #pedidoTable tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  
+  #pedidoTable tr:hover {
+    background-color: #ddd;
+  }
+  
+  /* Contenedor de búsqueda */
+  .search-container {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  #searchInput {
+    padding: 10px;
+    width: 80%;
+    max-width: 600px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+  }
+  
+  /* Botones de acción */
+  button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  button:hover {
+    background-color: #218838;
+  }
+  
+  /* Responsividad */
+  @media (max-width: 768px) {
+    #pedidoTable, #pedidoTable thead, #pedidoTable tbody, #pedidoTable th, #pedidoTable td, #pedidoTable tr {
+      display: block;
+    }
+  
+    #pedidoTable tr {
+      margin-bottom: 15px;
+      border-bottom: 2px solid #ddd;
+    }
+  
+    #pedidoTable td {
+      text-align: right;
+      padding-left: 50%;
+      position: relative;
+    }
+  
+    #pedidoTable td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 10px;
+      font-weight: bold;
+      text-align: left;
+    }
+  }
+  

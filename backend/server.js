@@ -1336,6 +1336,47 @@ ORDER BY p.id;
     return;
   }
 
+  if (path === "/getArchivo" && req.method === "GET") {
+    const pedidoId = parsedUrl.query.id;
+    if (!pedidoId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "ID de pedido no proporcionado" }));
+      return;
+    }
+
+    const query = `
+      SELECT f.file 
+      FROM pedidos p
+      LEFT JOIN notas n ON p.id = n.id_pedido
+      LEFT JOIN files_notas f ON n.id = f.id_nota
+      WHERE p.id = ?;
+    `;
+
+    connection.query(query, [pedidoId], (err, results) => {
+      if (err || results.length === 0) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al obtener el archivo" }));
+        return;
+      }
+
+      // Verificar si el archivo existe en los resultados
+      const archivo = results[0].file;
+      if (archivo) {
+        res.writeHead(200, {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename=pedido_${pedidoId}.pdf`,
+        });
+        // Enviar el archivo binario como respuesta
+        res.end(archivo);
+      } else {
+        // Si no hay archivo disponible
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Archivo no encontrado" }));
+      }
+    });
+    return;
+  }
+
   // Ruta no encontrada
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Ruta no encontrada");
