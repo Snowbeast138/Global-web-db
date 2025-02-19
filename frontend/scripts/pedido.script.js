@@ -9,23 +9,18 @@ document.addEventListener("DOMContentLoaded", function () {
       data.forEach((pedido) => {
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${pedido.pedido_id}</td>
-            <td>${pedido.cliente_nombre}</td>
-            <td>${pedido.fecha_pedido}</td>
-            <td>$${pedido.total_pedido}</td>
-            <td>
-              ${
-                pedido.archivo_adjunto
-                  ? `<a href="#" onclick="descargarArchivo(${pedido.pedido_id}, '${pedido.cliente_nombre}', '${pedido.fecha_pedido}')">📄 Descargar</a>`
-                  : "No disponible"
-              }
-            </td>
-            <td>
-              <button onclick="mostrarProductos(${
-                pedido.pedido_id
-              })">Mostrar Productos</button>
-            </td>
-          `;
+              <td>${pedido.pedido_id}</td>
+              <td>${pedido.cliente_nombre}</td>
+              <td>${pedido.fecha_pedido}</td>
+              <td>$${pedido.total_pedido}</td>
+              <td>
+                ${
+                  pedido.archivo_adjunto
+                    ? `<a href="#" onclick="descargarArchivo(${pedido.pedido_id}, '${pedido.cliente_nombre}', '${pedido.fecha_pedido}')">📄 Descargar</a>`
+                    : "No disponible"
+                }
+              </td>
+            `;
         tableBody.appendChild(row);
       });
     })
@@ -54,23 +49,18 @@ function filterPedidos() {
   filteredPedidos.forEach((pedido) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-            <td>${pedido.pedido_id}</td>
-            <td>${pedido.cliente_nombre}</td>
-            <td>${pedido.fecha_pedido}</td>
-            <td>$${pedido.total_pedido}</td>
-            <td>
-              ${
-                pedido.archivo_adjunto
-                  ? `<a href="#" onclick="descargarArchivo(${pedido.pedido_id}, '${pedido.cliente_nombre}', '${pedido.fecha_pedido}')">📄 Descargar</a>`
-                  : "No disponible"
-              }
-            </td>
-            <td>
-              <button onclick="mostrarProductos(${
-                pedido.pedido_id
-              })">Mostrar Productos</button>
-            </td>
-          `;
+              <td>${pedido.pedido_id}</td>
+              <td>${pedido.cliente_nombre}</td>
+              <td>${pedido.fecha_pedido}</td>
+              <td>$${pedido.total_pedido}</td>
+              <td>
+                ${
+                  pedido.archivo_adjunto
+                    ? `<a href="#" onclick="descargarArchivo(${pedido.pedido_id}, '${pedido.cliente_nombre}', '${pedido.fecha_pedido}')">📄 Descargar</a>`
+                    : "No disponible"
+                }
+              </td>
+            `;
     tableBody.appendChild(row);
   });
 }
