@@ -37,20 +37,20 @@ document.addEventListener("DOMContentLoaded", function () {
         const row = document.createElement("tr");
 
         row.innerHTML = `
-        <td>${item.id}</td>      
-        <td><img src="data:image/jpeg;base64,${item.image || "#"}" alt="${
+          <td>${item.id}</td>      
+          <td><img src="data:image/jpeg;base64,${item.image || "#"}" alt="${
           item.name
         }"></td>
-              <td>${item.name}</td>
-              <td>${item.description}</td>
-              <td>$${item.price.toFixed(2)}</td>
-              <td>${item.cantidad}</td>
-              <td>
-                <button class="delete-btn" data-id="${item.id}">
-                  <i class="pi pi-trash"></i>
-                </button>
-              </td>
-            `;
+          <td>${item.name}</td>
+          <td>${item.description}</td>
+          <td>$${item.price.toFixed(2)}</td>
+          <td>${item.cantidad}</td>
+          <td>
+            <button class="delete-btn" data-id="${item.id}">
+              <i class="pi pi-trash"></i>
+            </button>
+          </td>
+        `;
 
         tbody.appendChild(row);
       });
@@ -124,6 +124,10 @@ document
 
         // Limpia el contenedor de PayPal antes de renderizar el botón
         document.getElementById("paypal-button-container").innerHTML = "";
+
+        // Muestra el diálogo
+        const paypalDialog = document.getElementById("paypal-dialog");
+        paypalDialog.style.display = "flex";
 
         // Renderiza el botón de PayPal en el contenedor
         paypal
@@ -203,6 +207,21 @@ document
         console.error("Error al cargar el carrito:", error);
       });
   });
+
+// Cerrar el diálogo cuando se hace clic en el botón de cierre
+document.getElementById("close-dialog").addEventListener("click", function () {
+  const paypalDialog = document.getElementById("paypal-dialog");
+  paypalDialog.style.display = "none";
+});
+
+// Cerrar el diálogo si se hace clic fuera del contenido
+document.addEventListener("click", function (event) {
+  const paypalDialog = document.getElementById("paypal-dialog");
+  const dialogContent = document.querySelector(".dialog-content");
+  if (event.target === paypalDialog) {
+    paypalDialog.style.display = "none";
+  }
+});
 
 function calculateTotal(cartItems) {
   return cartItems.reduce(
