@@ -1,0 +1,75 @@
+/* bitacora.style.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Ocupa toda la altura de la pantalla */
+  }
+  
+  main {
+    flex: 1; /* Hace que el contenido principal ocupe todo el espacio disponible */
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+  }
+  
+  .bitacora-title {
+    text-align: center;
+    margin: 20px 0;
+    color: #333;
+  }
+  
+  .search-container {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .search-container input {
+    padding: 10px;
+    width: 80%;
+    max-width: 400px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .table-container {
+    flex: 1; /* Ocupa todo el espacio restante */
+    overflow-x: auto;
+    width: 100%;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+  }
+  
+  tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  @media (max-width: 768px) {
+    th, td {
+      padding: 8px;
+    }
+  
+    .search-container input {
+      width: 90%;
+    }
+  }
