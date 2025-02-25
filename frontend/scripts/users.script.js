@@ -256,7 +256,7 @@ document.getElementById("deleteButton").addEventListener("click", async () => {
     if (result.isConfirmed) {
       try {
         const response = await fetch("http://localhost:3000/deleteUsers", {
-          method: "DELETE",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },

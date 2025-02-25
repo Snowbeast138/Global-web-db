@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           try {
             const response = await fetch(
               `http://localhost:3000/deleteProduct?id=${productId}`,
-              { method: "DELETE" }
+              { method: "PUT" }
             );
             if (!response.ok) throw new Error("Error al eliminar el producto");
 

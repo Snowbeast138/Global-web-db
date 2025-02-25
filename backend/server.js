@@ -622,7 +622,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Ruta para eliminar usuarios seleccionados
-  if (path === "/deleteUsers" && req.method === "DELETE") {
+  if (path === "/deleteUsers" && req.method === "PUT") {
     let body = "";
     req.on("data", (chunk) => {
       body += chunk.toString();
@@ -644,7 +644,8 @@ const server = http.createServer((req, res) => {
         let errors = [];
 
         userIds.forEach((userId) => {
-          const deleteQuery = "DELETE FROM users WHERE id = ?";
+          const deleteQuery = "UPDATE users SET active = false WHERE id = ?";
+
           connection.query(deleteQuery, [userId], (err, results) => {
             if (err) {
               console.error("Error deleting user:", err);
@@ -1055,7 +1056,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (path === "/deleteProduct" && req.method === "DELETE") {
+  if (path === "/deleteProduct" && req.method === "PUT") {
     // Obtener el ID del producto desde los parámetros de la URL
     const urlParams = new URLSearchParams(req.url.split("?")[1]); // Extrae los parámetros de la URL
     const productId = urlParams.get("id"); // Obtiene el valor del parámetro "id"
@@ -1069,32 +1070,17 @@ const server = http.createServer((req, res) => {
 
     // Eliminar las imágenes asociadas al producto
     const deleteImgProductQuery =
-      "DELETE FROM images_productos WHERE producto_id = ?";
+      "UPDATE productos SET active = false WHERE id = ?";
 
-    connection.query(deleteImgProductQuery, [productId], (err, results) => {
+    connection.query(deleteImgProductQuery, [productId], (err) => {
       if (err) {
         res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            error: "Error al eliminar la imagen del producto",
-          })
-        );
+        res.end(JSON.stringify({ error: "Error al eliminar el producto" }));
         return;
       }
 
-      // Si la eliminación de la imagen fue exitosa, procedemos a eliminar el producto
-      const deleteProductQuery = "DELETE FROM productos WHERE id = ?";
-
-      connection.query(deleteProductQuery, [productId], (err, results) => {
-        if (err) {
-          res.writeHead(500, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Error al eliminar el producto" }));
-          return;
-        }
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: "Producto eliminado exitosamente" }));
-      });
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ message: "Producto eliminado exitosamente" }));
     });
 
     return;
@@ -1234,7 +1220,7 @@ const server = http.createServer((req, res) => {
   if (path === "/getUsers" && req.method === "GET") {
     // Consulta para obtener todos los usuarios
     const getUsersQuery =
-      "SELECT id, name, email, role, is_verified FROM users";
+      "SELECT id, name, email, role, is_verified FROM users where active=true";
 
     connection.query(getUsersQuery, (err, results) => {
       if (err) {
@@ -1285,6 +1271,7 @@ const server = http.createServer((req, res) => {
       SELECT p.id, p.name, p.description, p.price, ip.image 
       FROM productos p
       LEFT JOIN images_productos ip ON p.id = ip.producto_id
+      WHERE p.active = true
     `;
 
     connection.query(getProductsQuery, (err, results) => {
