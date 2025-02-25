@@ -1006,6 +1006,8 @@ const server = http.createServer((req, res) => {
         const { name, description, price } = JSON.parse(body);
         const productId = new URLSearchParams(req.url.split("?")[1]).get("id");
 
+        console.log(name, description, price, productId);
+
         if (!productId || isNaN(productId)) {
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "ID de producto no válido" }));

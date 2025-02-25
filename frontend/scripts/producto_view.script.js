@@ -39,7 +39,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     btComprar.addEventListener("click", async () => {
       try {
-        // Suponiendo que tienes los valores de userId, productId y quantity disponibles
         const userId = sessionStorage.getItem("userId");
         const productId = urlParams.get("id");
         const quantity = 1;
@@ -144,15 +143,37 @@ function openDialog(product) {
   formEditar.addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("name", nombreInput.value);
-    formData.append("description", descripcionInput.value);
-    formData.append("price", precioInput.value);
+    // Validar campos antes de enviar
+    if (
+      !nombreInput.value ||
+      !descripcionInput.value ||
+      isNaN(precioInput.value) ||
+      precioInput.value <= 0
+    ) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Por favor, completa todos los campos correctamente.",
+      });
+      return;
+    }
+
+    const formData = {
+      name: nombreInput.value,
+      description: descripcionInput.value,
+      price: parseFloat(precioInput.value),
+    };
 
     try {
       const response = await fetch(
         `http://localhost:3000/updateProduct?id=${product.id}`,
-        { method: "PUT", body: formData }
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
       );
 
       if (!response.ok) throw new Error("Error al actualizar el producto");
