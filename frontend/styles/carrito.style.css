@@ -82,6 +82,30 @@
   font-size: 18px;
 }
 
+/* Botón de Guardar Cambios */
+.save-btn {
+  margin-top: 20px;
+  padding: 12px 18px;
+  font-size: 16px;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.3s ease;
+}
+
+.save-btn:hover {
+  background-color: #0056b3;
+}
+
+.save-btn i {
+  font-size: 18px;
+}
+
 /* Diseño responsivo: tabla en móvil */
 @media (max-width: 768px) {
   .cart-container {
@@ -101,6 +125,11 @@
   }
 
   .finish-btn {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  .save-btn {
     font-size: 14px;
     padding: 10px 14px;
   }

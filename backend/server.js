@@ -88,7 +88,7 @@ function generatePDF(cartItems, totalPrice, userEmail) {
         width: colWidths[1],
         align: "left",
       })
-      .text("Precio", startX + colWidths[0] + colWidths[1], startY, {
+      .text("Precio Unitario", startX + colWidths[0] + colWidths[1], startY, {
         width: colWidths[2],
         align: "right",
       })
@@ -1095,6 +1095,75 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ message: "Producto eliminado exitosamente" }));
       });
+    });
+
+    return;
+  }
+
+  if (path === "/updateCartQuantities" && req.method === "POST") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString(); // Recibe los datos del cuerpo de la solicitud
+    });
+
+    req.on("end", () => {
+      try {
+        const changes = JSON.parse(body); // Parsea el cuerpo de la solicitud a un array de cambios
+
+        if (!Array.isArray(changes)) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Formato de datos no válido" }));
+          return;
+        }
+
+        if (changes.length === 0) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "No hay cambios para actualizar" }));
+          return;
+        }
+
+        // Crear una consulta SQL para cada cambio
+        const queries = changes.map((change) => {
+          return new Promise((resolve, reject) => {
+            const query = `
+              UPDATE carrito
+              SET cantidad = ?
+              WHERE id = ?;
+            `;
+            connection.query(
+              query,
+              [change.cantidad, change.id],
+              (error, results) => {
+                if (error) {
+                  reject(error);
+                } else {
+                  resolve(results);
+                }
+              }
+            );
+          });
+        });
+
+        // Ejecutar todas las consultas en paralelo
+        Promise.all(queries)
+          .then(() => {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({
+                message: "Cantidades actualizadas correctamente",
+              })
+            );
+          })
+          .catch((error) => {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({ error: "Error al actualizar las cantidades" })
+            );
+          });
+      } catch (error) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Error al procesar los datos" }));
+      }
     });
 
     return;

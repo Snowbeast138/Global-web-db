@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+  let originalQuantities = {}; // Almacenará las cantidades originales
+
   fetch(`http://localhost:3000/getCart?userId=${userId}`)
     .then((response) => {
       if (!response.ok) {
@@ -44,7 +46,11 @@ document.addEventListener("DOMContentLoaded", function () {
           <td>${item.name}</td>
           <td>${item.description}</td>
           <td>$${item.price.toFixed(2)}</td>
-          <td>${item.cantidad}</td>
+          <td>
+            <input type="number" class="quantity-input" data-id="${
+              item.id
+            }" value="${item.cantidad}" min="1">
+          </td>
           <td>
             <button class="delete-btn" data-id="${item.id}">
               <i class="pi pi-trash"></i>
@@ -53,6 +59,9 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
 
         tbody.appendChild(row);
+
+        // Guardar la cantidad original
+        originalQuantities[item.id] = item.cantidad;
       });
 
       // Agregar evento a los botones de eliminar
@@ -110,6 +119,66 @@ document.addEventListener("DOMContentLoaded", function () {
         text: "Hubo un problema al obtener los datos del carrito.",
       });
       console.error("Error al cargar el carrito:", error);
+    });
+
+  // Guardar cambios en las cantidades
+  document
+    .getElementById("save-changes")
+    .addEventListener("click", function () {
+      const inputs = document.querySelectorAll(".quantity-input");
+      const changes = [];
+
+      inputs.forEach((input) => {
+        const productId = input.getAttribute("data-id");
+        const newQuantity = parseInt(input.value, 10);
+        const originalQuantity = originalQuantities[productId];
+
+        // Solo agregar a cambios si la cantidad es diferente
+        if (newQuantity !== originalQuantity) {
+          changes.push({ id: productId, cantidad: newQuantity });
+        }
+      });
+
+      if (changes.length > 0) {
+        // Enviar los cambios al servidor
+        fetch("http://localhost:3000/updateCartQuantities", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(changes), // Envía los cambios como un array de objetos
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Error al actualizar las cantidades");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            Swal.fire({
+              icon: "success",
+              title: "Cambios guardados",
+              text: data.message,
+            }).then(() => {
+              // Recargar la página para reflejar los cambios
+              location.reload();
+            });
+          })
+          .catch((error) => {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "Hubo un problema al guardar los cambios.",
+            });
+            console.error("Error:", error);
+          });
+      } else {
+        Swal.fire({
+          icon: "info",
+          title: "Sin cambios",
+          text: "No se han realizado modificaciones en las cantidades.",
+        });
+      }
     });
 });
 
