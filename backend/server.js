@@ -754,26 +754,54 @@ const server = http.createServer((req, res) => {
     req.on("end", () => {
       try {
         const { userId, productId, quantity } = JSON.parse(body);
-        const insertQuery = `INSERT INTO carrito (id_cliente, id_producto, cantidad) VALUES (?, ?, ?)`;
+
+        // Verificar si el producto ya está en el carrito del usuario
+        const checkProductIsAlreadyInCartQuery = `SELECT * FROM carrito WHERE id_cliente = ? AND id_producto = ?`;
         connection.query(
-          insertQuery,
-          [userId, productId, quantity],
+          checkProductIsAlreadyInCartQuery,
+          [userId, productId],
           (err, results) => {
             if (err) {
-              console.error("Error inserting product to cart:", err);
+              console.error("Error checking product:", err);
               res.writeHead(500, { "Content-Type": "application/json" });
               res.end(
-                JSON.stringify({
-                  error: "Error al agregar el producto al carrito",
-                })
+                JSON.stringify({ error: "Error al verificar el producto" })
               );
               return;
             }
-            res.writeHead(200, { "Content-Type": "application/json" });
-            res.end(
-              JSON.stringify({
-                message: "Producto agregado al carrito exitosamente",
-              })
+
+            // Si el producto ya está en el carrito, enviar error 409 (Conflict)
+            if (results.length > 0) {
+              res.writeHead(409, { "Content-Type": "application/json" });
+              res.end(
+                JSON.stringify({ error: "Este producto ya está en el carrito" })
+              );
+              return;
+            }
+
+            // Si el producto no está en el carrito, insertarlo
+            const insertQuery = `INSERT INTO carrito (id_cliente, id_producto, cantidad) VALUES (?, ?, ?)`;
+            connection.query(
+              insertQuery,
+              [userId, productId, quantity],
+              (err, results) => {
+                if (err) {
+                  console.error("Error inserting product to cart:", err);
+                  res.writeHead(500, { "Content-Type": "application/json" });
+                  res.end(
+                    JSON.stringify({
+                      error: "Error al agregar el producto al carrito",
+                    })
+                  );
+                  return;
+                }
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(
+                  JSON.stringify({
+                    message: "Producto agregado al carrito exitosamente",
+                  })
+                );
+              }
             );
           }
         );

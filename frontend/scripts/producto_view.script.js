@@ -51,10 +51,18 @@ document.addEventListener("DOMContentLoaded", async function () {
           body: JSON.stringify({ userId, productId, quantity }),
         });
 
+        // Verificar si la respuesta es un error 409 (Conflict)
+        if (response.status === 409) {
+          const data = await response.json(); // Leer el mensaje de error del servidor
+          throw new Error(data.error || "Este producto ya está en el carrito");
+        }
+
+        // Verificar si la respuesta no es exitosa (otros errores)
         if (!response.ok) {
           throw new Error("Error al agregar el producto al carrito");
         }
 
+        // Mostrar mensaje de éxito
         Swal.fire({
           icon: "success",
           title: "Producto agregado al carrito",
@@ -62,11 +70,13 @@ document.addEventListener("DOMContentLoaded", async function () {
           timer: 1500,
         });
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Este es el Error:", error);
+
+        // Mostrar mensaje de error
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "No se pudo agregar el producto al carrito.",
+          text: error.message || "No se pudo agregar el producto al carrito.",
         });
       }
     });
