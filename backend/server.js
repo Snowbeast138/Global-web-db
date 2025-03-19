@@ -462,7 +462,39 @@ const server = http.createServer((req, res) => {
           }
 
           if (results.length > 0) {
-            // Si el correo ya existe
+            const user = results[0];
+
+            if (!user.active) {
+              // Si el usuario ya existe pero está inactivo
+              const updateQuery =
+                "UPDATE users SET active = true, password = ?, name = ? WHERE email = ?";
+              connection.query(
+                updateQuery,
+                [password, name, email],
+                (err, results) => {
+                  if (err) {
+                    console.error("Error updating user:", err);
+                    res.writeHead(500, { "Content-Type": "application/json" });
+                    res.end(
+                      JSON.stringify({
+                        error: "Error al activar el usuario existente",
+                      })
+                    );
+                    return;
+                  }
+
+                  res.writeHead(200, { "Content-Type": "application/json" });
+                  res.end(
+                    JSON.stringify({
+                      message: "Usuario re-activado exitosamente",
+                    })
+                  );
+                }
+              );
+              return;
+            }
+
+            // Si el correo ya existe y está activo
             res.writeHead(409, { "Content-Type": "application/json" });
             res.end(
               JSON.stringify({
@@ -472,11 +504,13 @@ const server = http.createServer((req, res) => {
             return;
           }
 
-          // Generar un token de verificación
+          // Si el correo no existe, proceder con la inserción
           const verificationToken = crypto.randomBytes(20).toString("hex");
 
-          // Insertar el nuevo usuario con el token de verificación
-          const insertQuery = `INSERT INTO users (name, email, password, role, verification_token, is_verified) VALUES (?, ?, ?, 'CLIENT', ?, false)`;
+          const insertQuery = `
+                    INSERT INTO users (name, email, password, role, verification_token, is_verified, active) 
+                    VALUES (?, ?, ?, 'CLIENT', ?, false, true)
+                `;
 
           connection.query(
             insertQuery,
@@ -539,7 +573,7 @@ const server = http.createServer((req, res) => {
 
     req.on("end", () => {
       try {
-        const { name, email, password, role } = JSON.parse(body);
+        const { name, email, password } = JSON.parse(body);
 
         // Verificar si el correo ya está registrado
         const checkEmailQuery = "SELECT * FROM users WHERE email = ?";
@@ -552,7 +586,39 @@ const server = http.createServer((req, res) => {
           }
 
           if (results.length > 0) {
-            // Si el correo ya existe
+            const user = results[0];
+
+            if (!user.active) {
+              // Si el usuario ya existe pero está inactivo
+              const updateQuery =
+                "UPDATE users SET active = true, password = ?, name = ? WHERE email = ?";
+              connection.query(
+                updateQuery,
+                [password, name, email],
+                (err, results) => {
+                  if (err) {
+                    console.error("Error updating user:", err);
+                    res.writeHead(500, { "Content-Type": "application/json" });
+                    res.end(
+                      JSON.stringify({
+                        error: "Error al activar el usuario existente",
+                      })
+                    );
+                    return;
+                  }
+
+                  res.writeHead(200, { "Content-Type": "application/json" });
+                  res.end(
+                    JSON.stringify({
+                      message: "Usuario re-activado exitosamente",
+                    })
+                  );
+                }
+              );
+              return;
+            }
+
+            // Si el correo ya existe y está activo
             res.writeHead(409, { "Content-Type": "application/json" });
             res.end(
               JSON.stringify({
@@ -562,15 +628,17 @@ const server = http.createServer((req, res) => {
             return;
           }
 
-          // Generar un token de verificación
+          // Si el correo no existe, proceder con la inserción
           const verificationToken = crypto.randomBytes(20).toString("hex");
 
-          // Insertar el nuevo usuario con el token de verificación
-          const insertQuery = `INSERT INTO users (name, email, password, role, verification_token, is_verified) VALUES (?, ?, ?, ?, ?, false)`;
+          const insertQuery = `
+                    INSERT INTO users (name, email, password, role, verification_token, is_verified, active) 
+                    VALUES (?, ?, ?, 'CLIENT', ?, false, true)
+                `;
 
           connection.query(
             insertQuery,
-            [name, email, password, role, verificationToken],
+            [name, email, password, verificationToken],
             (err, results) => {
               if (err) {
                 console.error("Error inserting user:", err);
