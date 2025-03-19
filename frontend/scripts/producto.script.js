@@ -30,7 +30,76 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Manejar el envío del formulario para agregar un nuevo producto
   productForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    // ... (código existente para agregar productos)
+    const name = document.getElementById("product-name").value;
+    const description = document.getElementById("product-description").value;
+    const price = parseFloat(document.getElementById("product-price").value);
+    const imageFile = document.getElementById("product-image").files[0];
+
+    if (!imageFile) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Por favor, selecciona una imagen.",
+      });
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024; // 2 MB
+
+    if (imageFile.size > maxSize) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "La imagen es demasiado grande. El tamaño máximo permitido es de 2 MB.",
+      });
+      return;
+    }
+
+    // Convertir la imagen a base64
+    const reader = new FileReader();
+    reader.readAsDataURL(imageFile);
+    reader.onload = async () => {
+      const imageBase64 = reader.result.split(",")[1]; // Eliminar el prefijo "data:image/..."
+
+      // Enviar el nuevo producto al servidor
+      try {
+        const response = await fetch("http://localhost:3000/addProduct", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            price,
+            image: imageBase64, // Enviar la imagen en base64
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          // Cerrar el diálogo y resetear el formulario
+          dialog.close();
+          productForm.reset();
+          Swal.fire({
+            icon: "success",
+            title: "Producto agregado",
+            text: `El producto "${name}" ha sido agregado correctamente.`,
+          });
+
+          // Recargar la lista de productos
+          await fetchProducts();
+          await displayProducts(currentPage);
+          await setupPagination();
+        } else {
+          const error = await response.json();
+          alert(`Error: ${error.message}`);
+        }
+      } catch (error) {
+        console.error("Error al agregar el producto:", error);
+        alert("Error al agregar el producto. Por favor, inténtalo de nuevo.");
+      }
+    };
   });
 
   // Función para obtener los productos desde el servidor
